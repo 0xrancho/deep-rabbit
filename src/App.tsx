@@ -6,6 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AssessmentLanding from "./pages/AssessmentLanding";
 import AssessmentStep from "./pages/AssessmentStep";
 import EnhancedAssessmentReport from "./pages/EnhancedAssessmentReport";
+import DiscoverySetup from "./pages/DiscoverySetup";
+import DiscoveryICP from "./pages/DiscoveryICP";
+import DiscoveryContext from "./pages/DiscoveryContext";
+import DiscoverySession from "./pages/DiscoverySession";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,11 +27,21 @@ const App = () => (
           }}
         >
           <Routes>
-            <Route path="/" element={<AssessmentLanding />} />
+            {/* Default route - redirect to Discovery Wizard */}
+            <Route path="/" element={<DiscoverySetup />} />
+            
+            {/* Discovery Wizard Flow */}
+            <Route path="/discovery/setup" element={<DiscoverySetup />} />
+            <Route path="/discovery/icp/:sessionId" element={<DiscoveryICP />} />
+            <Route path="/discovery/context/:sessionId" element={<DiscoveryContext />} />
+            <Route path="/discovery/session/:sessionId" element={<DiscoverySession />} />
+            
+            {/* Legacy Assessment Routes (for backwards compatibility) */}
             <Route path="/assessment" element={<AssessmentLanding />} />
             <Route path="/assessment/step" element={<AssessmentStep />} />
             <Route path="/assessment/report" element={<EnhancedAssessmentReport />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            
+            {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
