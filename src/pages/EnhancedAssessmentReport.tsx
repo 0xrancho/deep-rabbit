@@ -184,7 +184,7 @@ const EnhancedAssessmentReport = () => {
             <h3 className="text-lg font-semibold mb-2">Report Not Available</h3>
             <p className="text-text-secondary mb-4">{error}</p>
             <div className="space-x-2">
-              <Button onClick={regenerateReport} className="btn-gabi">
+              <Button onClick={regenerateReport} className="btn-sep">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Regenerate Report
               </Button>

@@ -29,10 +29,15 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				
-				// GABI brand colors
-				gabi: {
-					purple: 'hsl(var(--gabi-purple))',
-					pink: 'hsl(var(--gabi-pink))',
+				// SEP brand colors
+				sep: {
+					primary: 'hsl(var(--sep-primary))',
+					secondary: 'hsl(var(--sep-secondary))',
+					neutral: 'hsl(var(--sep-neutral))',
+					success: 'hsl(var(--sep-success))',
+					accent: 'hsl(var(--sep-accent))',
+					light: 'hsl(var(--sep-light))',
+					text: 'hsl(var(--sep-text))',
 				},
 				
 				// User accent colors
@@ -78,7 +83,7 @@ export default {
 				
 				// Keep shadcn colors for compatibility
 				primary: {
-					DEFAULT: 'hsl(var(--gabi-purple))',
+					DEFAULT: 'hsl(var(--sep-primary))',
 					foreground: 'hsl(var(--text-primary))'
 				},
 				secondary: {

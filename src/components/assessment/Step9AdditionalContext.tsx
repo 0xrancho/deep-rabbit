@@ -66,7 +66,7 @@ const Step9AdditionalContext = ({ data, updateData, onNext }: Props) => {
         
         <Button
           onClick={handleNext}
-          className="btn-gabi px-8"
+          className="btn-sep px-8"
         >
           Generate Assessment →
         </Button>

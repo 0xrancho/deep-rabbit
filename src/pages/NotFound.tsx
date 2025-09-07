@@ -15,7 +15,7 @@ const NotFound = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-gabi-purple/5" />
-      <div className="absolute top-1/4 left-1/4 w-64 h-64 gabi-gradient rounded-full blur-3xl opacity-10 animate-pulse" />
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 sep-gradient rounded-full blur-3xl opacity-10 animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-user-accent/20 rounded-full blur-3xl opacity-20" />
 
       <div className="text-center relative z-10">

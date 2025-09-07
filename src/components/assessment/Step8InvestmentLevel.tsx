@@ -121,7 +121,7 @@ const Step8InvestmentLevel = ({ data, updateData, onNext }: Props) => {
         <Button
           onClick={handleNext}
           disabled={!selectedLevel}
-          className="btn-gabi px-8"
+          className="btn-sep px-8"
         >
           Continue
           <span className="ml-2">→</span>

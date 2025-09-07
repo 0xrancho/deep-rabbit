@@ -239,7 +239,7 @@ const AssessmentReport = () => {
           <h2 className="text-xl font-semibold text-text-primary">Report Loading Failed</h2>
           <p className="text-text-secondary">{error}</p>
           <div className="flex gap-4 justify-center">
-            <Button onClick={retryReportGeneration} className="btn-gabi">
+            <Button onClick={retryReportGeneration} className="btn-sep">
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
             </Button>
@@ -260,7 +260,7 @@ const AssessmentReport = () => {
           <AlertCircle className="w-16 h-16 text-warning mx-auto" />
           <h2 className="text-xl font-semibold text-text-primary">No Report Found</h2>
           <p className="text-text-secondary">Unable to load your assessment report.</p>
-          <Button onClick={() => navigate('/assessment')} className="btn-gabi">
+          <Button onClick={() => navigate('/assessment')} className="btn-sep">
             Start New Assessment
           </Button>
         </div>
@@ -522,7 +522,7 @@ const AssessmentReport = () => {
                 </p>
                 <Button 
                   onClick={() => handleCTAClick('free_call')}
-                  className="btn-gabi w-full"
+                  className="btn-sep w-full"
                 >
                   Schedule Free Strategy Call
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -569,7 +569,7 @@ const AssessmentReport = () => {
                 </p>
                 <Button 
                   onClick={() => handleCTAClick('gabi_signup')}
-                  className="btn-gabi w-full"
+                  className="btn-sep w-full"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Start with GABI
@@ -586,7 +586,7 @@ const AssessmentReport = () => {
           <Card className="glass-card w-full max-w-md">
             <CardHeader>
               <CardTitle className="text-center">
-                <span className="gabi-text">GABI says:</span> How does this assessment land with you?
+                <span className="sep-text">GABI says:</span> How does this assessment land with you?
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -619,7 +619,7 @@ const AssessmentReport = () => {
                 </Button>
                 <Button 
                   onClick={handleFeedbackSubmit}
-                  className="btn-gabi flex-1"
+                  className="btn-sep flex-1"
                 >
                   Thanks for the feedback!
                 </Button>

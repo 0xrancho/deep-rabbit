@@ -88,7 +88,7 @@ const Step6ProcessDescription = ({ data, updateData, onNext }: Props) => {
         <Button
           onClick={handleNext}
           disabled={wordCount < 50}
-          className="btn-gabi px-8"
+          className="btn-sep px-8"
         >
           Continue
           <span className="ml-2">→</span>

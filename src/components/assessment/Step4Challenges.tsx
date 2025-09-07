@@ -220,7 +220,7 @@ const Step4Challenges = ({ data, updateData, onNext }: Props) => {
             (step === 1 && selectedChallenges.length === 0) ||
             (step === 2 && selectedMetrics.length === 0)
           }
-          className="btn-gabi px-8 ml-auto"
+          className="btn-sep px-8 ml-auto"
         >
           {step === 3 ? 'Continue' : 'Next'}
           <span className="ml-2">→</span>

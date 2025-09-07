@@ -180,7 +180,7 @@ const DeepReportGeneration = ({ data, updateData }: Props) => {
             </p>
             <button
               onClick={retryGeneration}
-              className="btn-gabi px-6 py-2"
+              className="btn-sep px-6 py-2"
             >
               Retry Deep Analysis
             </button>

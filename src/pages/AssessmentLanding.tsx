@@ -234,7 +234,7 @@ const AssessmentLanding = () => {
                 <Button
                   type="submit"
                   disabled={!isFormValid || isLoading}
-                  className={`w-full text-lg py-6 gabi-gradient hover:opacity-90 text-white font-medium transition-all duration-200 ${
+                  className={`w-full text-lg py-6 sep-gradient hover:opacity-90 text-white font-medium transition-all duration-200 ${
                     !isFormValid ? 'opacity-50 cursor-not-allowed' : ''
                   } ${isLoading ? 'opacity-75' : ''}`}
                 >

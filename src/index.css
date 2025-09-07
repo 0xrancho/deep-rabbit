@@ -11,22 +11,27 @@
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
 
-    /* GABI Brand - Purple/Pink gradients */
-    --gabi-purple: 262 83% 58%;
-    --gabi-pink: 330 81% 60%;
-    --gabi-gradient: linear-gradient(135deg, hsl(var(--gabi-purple)), hsl(var(--gabi-pink)));
+    /* SEP Brand Colors */
+    --sep-primary: 237 84% 66%;      /* #6366F1 Purple-blue */
+    --sep-secondary: 174 72% 41%;    /* #14B8A6 Teal */
+    --sep-neutral: 215 19% 35%;      /* #475569 Slate */
+    --sep-success: 158 64% 39%;      /* #10B981 Green */
+    --sep-accent: 0 84% 63%;         /* #EF4444 Red */
+    --sep-light: 210 40% 98%;        /* #F8FAFC Off-white */
+    --sep-text: 215 28% 30%;         /* #334155 Dark slate */
+    --sep-gradient: linear-gradient(135deg, hsl(var(--sep-primary)), hsl(var(--sep-secondary)));
 
-    /* User accent - Neon green */
-    --user-accent: 142 76% 36%;
-    --user-accent-bright: 142 90% 45%;
+    /* User accent - using secondary teal */
+    --user-accent: var(--sep-secondary);
+    --user-accent-bright: 174 72% 50%;
 
     /* Semantic colors */
     --text-primary: 0 0% 100%;
     --text-secondary: 0 0% 64%;
     --text-muted: 0 0% 45%;
 
-    --success: 142 76% 36%;
-    --error: 0 84% 60%;
+    --success: var(--sep-success);
+    --error: var(--sep-accent);
     --warning: 48 96% 53%;
 
     /* Glass morphism surfaces */
@@ -51,10 +56,10 @@
 
     /* Progress and loading */
     --progress-bg: 0 0% 10%;
-    --progress-fill: var(--gabi-gradient);
+    --progress-fill: var(--sep-gradient);
 
     /* Glows and effects */
-    --glow-gabi: 0 0 30px hsl(var(--gabi-purple) / 0.3);
+    --glow-sep: 0 0 30px hsl(var(--sep-primary) / 0.3);
     --glow-user: 0 0 20px hsl(var(--user-accent) / 0.4);
     --glow-subtle: 0 0 15px rgba(255, 255, 255, 0.1);
 
@@ -118,20 +123,20 @@
     );
   }
 
-  /* GABI branded elements */
-  .gabi-gradient {
-    background: var(--gabi-gradient);
+  /* SEP branded elements */
+  .sep-gradient {
+    background: var(--sep-gradient);
   }
 
-  .gabi-text {
-    background: var(--gabi-gradient);
+  .sep-text {
+    background: var(--sep-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .gabi-glow {
-    box-shadow: var(--glow-gabi);
+  .sep-glow {
+    box-shadow: var(--glow-sep);
   }
 
   /* User accent elements */
@@ -144,24 +149,24 @@
   }
 
   /* Interactive button styles */
-  .btn-gabi {
+  .btn-sep {
     @apply relative overflow-hidden px-8 py-4 rounded-xl font-semibold;
     @apply transition-all duration-300 transform;
-    background: var(--gabi-gradient);
+    background: var(--sep-gradient);
     color: white;
     border: none;
   }
 
-  .btn-gabi:hover {
+  .btn-sep:hover {
     @apply scale-105;
-    box-shadow: var(--glow-gabi), 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--glow-sep), 0 10px 25px -5px rgba(0, 0, 0, 0.3);
   }
 
-  .btn-gabi:active {
+  .btn-sep:active {
     @apply scale-95;
   }
 
-  .btn-gabi::before {
+  .btn-sep::before {
     content: '';
     @apply absolute inset-0 opacity-0 transition-opacity duration-300;
     background: linear-gradient(
@@ -171,7 +176,7 @@
     );
   }
 
-  .btn-gabi:hover::before {
+  .btn-sep:hover::before {
     @apply opacity-100;
   }
 
@@ -183,8 +188,8 @@
 
   .progress-fill {
     @apply h-full transition-all duration-500 ease-out;
-    background: var(--gabi-gradient);
-    box-shadow: 0 0 10px hsl(var(--gabi-purple) / 0.5);
+    background: var(--sep-gradient);
+    box-shadow: 0 0 10px hsl(var(--sep-primary) / 0.5);
   }
 
   /* Input styling */
@@ -264,10 +269,10 @@
 
   @keyframes glowPulse {
     0%, 100% {
-      box-shadow: 0 0 5px hsl(var(--gabi-purple) / 0.3);
+      box-shadow: 0 0 5px hsl(var(--sep-primary) / 0.3);
     }
     50% {
-      box-shadow: 0 0 20px hsl(var(--gabi-purple) / 0.6), 0 0 30px hsl(var(--gabi-pink) / 0.4);
+      box-shadow: 0 0 20px hsl(var(--sep-primary) / 0.6), 0 0 30px hsl(var(--sep-secondary) / 0.4);
     }
   }
 

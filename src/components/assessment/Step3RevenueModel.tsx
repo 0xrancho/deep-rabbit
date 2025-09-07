@@ -76,7 +76,7 @@ const Step3RevenueModel = ({ data, updateData, onNext }: Props) => {
         <Button
           onClick={handleNext}
           disabled={revenueModel.trim().length < 50}
-          className="btn-gabi px-8"
+          className="btn-sep px-8"
         >
           Continue
           <span className="ml-2">→</span>

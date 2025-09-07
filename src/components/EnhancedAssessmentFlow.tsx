@@ -436,7 +436,7 @@ export function EnhancedAssessmentFlow({ initialData, onComplete, onProgress }: 
             <Button
               onClick={handleQuantificationSubmit}
               disabled={!baselineInput || !frictionInput}
-              className="btn-gabi px-8"
+              className="btn-sep px-8"
             >
               Continue to Process Mapping
               <span className="ml-2">→</span>
@@ -474,7 +474,7 @@ export function EnhancedAssessmentFlow({ initialData, onComplete, onProgress }: 
             <Button
               onClick={handleSimpleProcessSubmit}
               disabled={!processRefinementInput || processRefinementInput.trim().length < 50}
-              className="btn-gabi px-8"
+              className="btn-sep px-8"
             >
               Continue
               <span className="ml-2">→</span>
@@ -515,7 +515,7 @@ export function EnhancedAssessmentFlow({ initialData, onComplete, onProgress }: 
           <div className="flex space-x-4">
             <button
               onClick={() => handleProcessValidation(true)}
-              className="px-6 py-3 btn-gabi px-8"
+              className="px-6 py-3 btn-sep px-8"
             >
               ✅ Spot On!
             </button>
@@ -544,7 +544,7 @@ export function EnhancedAssessmentFlow({ initialData, onComplete, onProgress }: 
             <button
               onClick={() => handleProcessValidation(false)}
               disabled={!processRefinementInput}
-              className="btn-gabi px-8 disabled:opacity-50"
+              className="btn-sep px-8 disabled:opacity-50"
             >
               Update Analysis →
             </button>
@@ -571,7 +571,7 @@ export function EnhancedAssessmentFlow({ initialData, onComplete, onProgress }: 
 
           <Button
             onClick={handleGenerateAssessment}
-            className="btn-gabi px-12 py-4 text-lg"
+            className="btn-sep px-12 py-4 text-lg"
           >
             Generate Assessment
             <span className="ml-3">🚀</span>
