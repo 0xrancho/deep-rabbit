@@ -1,0 +1,187 @@
+name: Weekly Intelligence Update
+
+on:
+  # Run every Sunday at 3 AM UTC
+  schedule:
+    - cron: '0 3 * * 0'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      validation_only:
+        description: 'Run validation only (skip discovery)'
+        required: false
+        default: 'false'
+        type: boolean
+      debug_mode:
+        description: 'Enable debug logging'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  intelligence-update:
+    runs-on: ubuntu-latest
+    
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Validate environment
+        run: |
+          echo "Checking required environment variables..."
+          if [ -z "$VITE_SUPABASE_URL" ]; then
+            echo "❌ VITE_SUPABASE_URL not set"
+            exit 1
+          fi
+          if [ -z "$SUPABASE_SERVICE_KEY" ]; then
+            echo "❌ SUPABASE_SERVICE_KEY not set"  
+            exit 1
+          fi
+          if [ -z "$VITE_OPENAI_API_KEY" ]; then
+            echo "❌ VITE_OPENAI_API_KEY not set"
+            exit 1
+          fi
+          echo "✅ All environment variables present"
+          
+      - name: Run tool validation
+        id: validation
+        run: |
+          echo "🔍 Running tool validation..."
+          npx tsx scripts/validate-tools.ts
+          
+          # Check if validation report exists and extract metrics
+          if [ -f "tool-validation-report.json" ]; then
+            VALIDATED=$(jq -r '.tools_validated' tool-validation-report.json)
+            DEPRECATED=$(jq -r '.tools_deprecated' tool-validation-report.json)
+            REFRESHED=$(jq -r '.tools_refreshed' tool-validation-report.json)
+            HEALTH_RATE=$(jq -r '.summary.health_rate' tool-validation-report.json)
+            
+            echo "validated=$VALIDATED" >> $GITHUB_OUTPUT
+            echo "deprecated=$DEPRECATED" >> $GITHUB_OUTPUT  
+            echo "refreshed=$REFRESHED" >> $GITHUB_OUTPUT
+            echo "health_rate=$HEALTH_RATE" >> $GITHUB_OUTPUT
+            
+            echo "📊 Validation Results:"
+            echo "- Tools validated: $VALIDATED"
+            echo "- Tools deprecated: $DEPRECATED" 
+            echo "- Tools refreshed: $REFRESHED"
+            echo "- Database health: $HEALTH_RATE"
+          else
+            echo "⚠️ No validation report generated"
+            exit 1
+          fi
+        continue-on-error: true
+        
+      - name: Discover new tools
+        if: ${{ github.event.inputs.validation_only != 'true' }}
+        id: discovery
+        run: |
+          echo "🔍 Discovering new tools from sources..."
+          npx tsx scripts/discover-new-tools.ts
+          
+          # Extract discovery metrics if report exists
+          if [ -f "tool-discovery-report.json" ]; then
+            NEW_TOOLS=$(jq -r '.new_tools_added' tool-discovery-report.json)
+            SOURCES_CHECKED=$(jq -r '.sources_checked' tool-discovery-report.json)
+            
+            echo "new_tools=$NEW_TOOLS" >> $GITHUB_OUTPUT
+            echo "sources_checked=$SOURCES_CHECKED" >> $GITHUB_OUTPUT
+            
+            echo "📊 Discovery Results:"
+            echo "- New tools added: $NEW_TOOLS"
+            echo "- Sources checked: $SOURCES_CHECKED"
+          else
+            echo "⚠️ No discovery report generated"
+            echo "new_tools=0" >> $GITHUB_OUTPUT
+            echo "sources_checked=0" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+        
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: intelligence-reports-${{ github.run_number }}
+          path: |
+            tool-validation-report.json
+            tool-discovery-report.json
+            core-tools-seed.json
+            *.log
+          retention-days: 30
+          
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Weekly Intelligence Update Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `
+            ## Intelligence Update Failure Report
+            
+            **Run ID:** ${{ github.run_id }}
+            **Triggered by:** ${{ github.event_name }}
+            **Timestamp:** ${new Date().toISOString()}
+            
+            ### Job Status
+            - **Validation:** ${{ steps.validation.outcome }}
+            - **Discovery:** ${{ steps.discovery.outcome }}
+            
+            ### Metrics (if available)
+            - **Tools validated:** ${{ steps.validation.outputs.validated || 'N/A' }}
+            - **Tools deprecated:** ${{ steps.validation.outputs.deprecated || 'N/A' }}
+            - **Tools refreshed:** ${{ steps.validation.outputs.refreshed || 'N/A' }}
+            - **Database health:** ${{ steps.validation.outputs.health_rate || 'N/A' }}
+            - **New tools added:** ${{ steps.discovery.outputs.new_tools || 'N/A' }}
+            
+            ### Next Steps
+            1. Check the [workflow run logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            2. Review the uploaded artifacts for detailed reports
+            3. Fix any environment or configuration issues
+            4. Re-run the workflow manually if needed
+            
+            ### Environment Check
+            - Supabase URL: ${process.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing'}
+            - Supabase Service Key: ${process.env.SUPABASE_SERVICE_KEY ? '✅ Set' : '❌ Missing'}
+            - OpenAI API Key: ${process.env.VITE_OPENAI_API_KEY ? '✅ Set' : '❌ Missing'}
+            
+            **Auto-generated by Weekly Intelligence Update workflow**
+            `;
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'intelligence', 'automation']
+            });
+            
+      - name: Post success summary
+        if: success()
+        run: |
+          echo "✅ Weekly Intelligence Update Complete!"
+          echo ""
+          echo "📊 Summary:"
+          echo "- Tools validated: ${{ steps.validation.outputs.validated || 0 }}"
+          echo "- Tools deprecated: ${{ steps.validation.outputs.deprecated || 0 }}"  
+          echo "- Tools refreshed: ${{ steps.validation.outputs.refreshed || 0 }}"
+          echo "- Database health: ${{ steps.validation.outputs.health_rate || '100%' }}"
+          echo "- New tools added: ${{ steps.discovery.outputs.new_tools || 0 }}"
+          echo "- Sources checked: ${{ steps.discovery.outputs.sources_checked || 0 }}"
+          echo ""
+          echo "🎉 RAG Intelligence Database is up to date!"

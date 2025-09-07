@@ -1,0 +1,22 @@
+{
+  "migration_completed_at": "2025-08-29T17:02:33.569Z",
+  "success": false,
+  "migrated_tools": 0,
+  "regenerated_embeddings": 0,
+  "errors": [
+    "No Supabase connection available"
+  ],
+  "schema_changes": [
+    "Created tools_minimal table with 8 core columns",
+    "Added rich description_full field for embedding",
+    "Added icp_fit, challenge_fit, budget_range for pre-filtering",
+    "Created simplified vector_search_minimal RPC function",
+    "Migrated existing tools from complex schema"
+  ],
+  "next_steps": [
+    "Update RAG retriever to use tools_minimal table",
+    "Update weekly intelligence script for tool validation",
+    "Add new intelligence sources (awesome-ai-agents, TAIT)",
+    "Test end-to-end with simplified pipeline"
+  ]
+}
