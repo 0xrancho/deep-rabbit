@@ -9,7 +9,7 @@ import EnhancedAssessmentReport from "./pages/EnhancedAssessmentReport";
 import DiscoverySetup from "./pages/DiscoverySetup";
 import DiscoveryICP from "./pages/DiscoveryICP";
 import DiscoveryContext from "./pages/DiscoveryContext";
-import DiscoverySession from "./pages/DiscoverySession";
+import DiscoverySessionV2 from "./pages/DiscoverySessionV2";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,7 +34,7 @@ const App = () => (
             <Route path="/discovery/setup" element={<DiscoverySetup />} />
             <Route path="/discovery/icp/:sessionId" element={<DiscoveryICP />} />
             <Route path="/discovery/context/:sessionId" element={<DiscoveryContext />} />
-            <Route path="/discovery/session/:sessionId" element={<DiscoverySession />} />
+            <Route path="/discovery/session/:sessionId" element={<DiscoverySessionV2 />} />
             
             {/* Legacy Assessment Routes (for backwards compatibility) */}
             <Route path="/assessment" element={<AssessmentLanding />} />

@@ -137,6 +137,37 @@ export interface ConversationMessage {
   question_suggestions?: string[];
 }
 
+// New types for document-style discovery
+export interface QuestionBlock {
+  id: string;
+  questionText: string;
+  questionNumber: number;
+  notes: string;
+  isCollapsed: boolean;
+  timestamp: Date;
+}
+
+export interface DiscoveryNote {
+  areaId: string;
+  areaName: string;
+  questions: QuestionBlock[];
+  currentNotes: string;
+  lastUpdated: Date;
+}
+
+export interface ProgressTracking {
+  totalAssessments: number;      // Target: 16
+  completedAssessments: number;  // Current count
+  areaBreakdown: {
+    [areaName: string]: {
+      questionsAsked: number;    // Target: 2 per area
+      hasNotes: boolean;
+      lastUpdated: Date;
+    }
+  };
+  isComplete: boolean;           // completedAssessments >= 16
+}
+
 // ICP Configurations with industry-specific context
 export const ICP_CONFIGS = {
   'Aerospace/Defense': {
