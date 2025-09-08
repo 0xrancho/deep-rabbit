@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/lib/supabase';
+import { MockStorageService } from '@/lib/mockStorage';
 import { 
   DiscoverySession as SessionType, 
   DiscoveryArea, 
@@ -33,13 +34,14 @@ const DiscoverySession = () => {
 
   const loadSession = async () => {
     try {
-      const { data: sessionData, error } = await supabase
-        .from('discovery_sessions')
-        .select('*, consultant:users(*)')
-        .eq('id', sessionId)
-        .single();
+      if (!sessionId) {
+        navigate('/discovery/setup');
+        return;
+      }
 
-      if (error || !sessionData) {
+      const sessionData = await MockStorageService.getSession(sessionId);
+
+      if (!sessionData) {
         navigate('/discovery/setup');
         return;
       }
@@ -52,25 +54,19 @@ const DiscoverySession = () => {
 
   const loadDiscoveryAreas = async () => {
     try {
-      const { data: areas, error } = await supabase
-        .from('discovery_areas')
-        .select('*')
-        .eq('session_id', sessionId)
-        .order('created_at', { ascending: true });
+      if (!sessionId) return;
 
-      if (error) {
-        console.error('Error loading discovery areas:', error);
-        return;
-      }
-
-      setDiscoveryAreas(areas || []);
+      const areas = await MockStorageService.getDiscoveryAreas(sessionId);
+      setDiscoveryAreas(areas);
       
       // Set active area (first one that's not 100% complete, or first one)
-      const activeAreaFromDB = areas?.find(area => area.is_active);
-      const firstIncomplete = areas?.find(area => area.completion_percentage < 100);
-      setActiveArea(activeAreaFromDB || firstIncomplete || areas?.[0] || null);
+      const activeAreaFromDB = areas.find(area => area.is_active);
+      const firstIncomplete = areas.find(area => area.completion_percentage < 100);
+      setActiveArea(activeAreaFromDB || firstIncomplete || areas[0] || null);
+      
+      console.log('Loaded discovery areas:', areas);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error loading discovery areas:', error);
     } finally {
       setIsLoading(false);
     }
@@ -79,16 +75,10 @@ const DiscoverySession = () => {
   const handleAreaSelect = async (area: DiscoveryArea) => {
     if (area.id === activeArea?.id) return;
 
-    // Update active area in database
-    await supabase
-      .from('discovery_areas')
-      .update({ is_active: false })
-      .eq('session_id', sessionId);
-    
-    await supabase
-      .from('discovery_areas')
-      .update({ is_active: true })
-      .eq('id', area.id);
+    // Update active area
+    if (sessionId) {
+      await MockStorageService.setActiveArea(sessionId, area.id);
+    }
 
     setActiveArea(area);
     
@@ -136,13 +126,10 @@ What would you like to discuss first?`,
       const updatedConversation = [initialMessage];
       
       // Update the area with initial questions
-      await supabase
-        .from('discovery_areas')
-        .update({ 
-          conversation_data: updatedConversation,
-          completion_percentage: 10 // Starting progress
-        })
-        .eq('id', area.id);
+      await MockStorageService.updateDiscoveryArea(area.id, { 
+        conversation_data: updatedConversation,
+        completion_percentage: 10 // Starting progress
+      });
 
       // Update local state
       setActiveArea(prev => prev ? {
@@ -201,13 +188,10 @@ What would you like to discuss first?`,
       const newProgress = calculateProgress(finalConversation);
 
       // Update database
-      await supabase
-        .from('discovery_areas')
-        .update({ 
-          conversation_data: finalConversation,
-          completion_percentage: newProgress
-        })
-        .eq('id', activeArea.id);
+      await MockStorageService.updateDiscoveryArea(activeArea.id, { 
+        conversation_data: finalConversation,
+        completion_percentage: newProgress
+      });
 
       // Update UI
       setActiveArea(prev => prev ? {

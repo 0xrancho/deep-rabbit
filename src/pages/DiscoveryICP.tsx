@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
+import { MockStorageService } from '@/lib/mockStorage';
 import { ClientICP, ICP_CONFIGS, DiscoverySession } from '@/types/discovery';
 
 const DiscoveryICP = () => {
@@ -20,13 +21,14 @@ const DiscoveryICP = () => {
 
   const loadSession = async () => {
     try {
-      const { data: sessionData, error } = await supabase
-        .from('discovery_sessions')
-        .select('*')
-        .eq('id', sessionId)
-        .single();
+      if (!sessionId) {
+        navigate('/discovery/setup');
+        return;
+      }
 
-      if (error || !sessionData) {
+      const sessionData = await MockStorageService.getSession(sessionId);
+
+      if (!sessionData) {
         navigate('/discovery/setup');
         return;
       }
@@ -52,15 +54,16 @@ const DiscoveryICP = () => {
 
     try {
       // Update the session with selected ICP
-      const { error } = await supabase
-        .from('discovery_sessions')
-        .update({ client_icp: selectedICP })
-        .eq('id', sessionId);
+      const updatedSession = await MockStorageService.updateSession(sessionId, { 
+        client_icp: selectedICP 
+      });
 
-      if (error) {
-        console.error('Error updating session:', error);
+      if (!updatedSession) {
+        console.error('Error updating session');
         return;
       }
+
+      console.log('Updated session with ICP:', selectedICP);
 
       // Navigate to context page
       navigate(`/discovery/context/${sessionId}`);

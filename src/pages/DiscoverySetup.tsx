@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 import { MockAuthService } from '@/lib/mockAuth';
+import { MockStorageService, mockSupabaseDB } from '@/lib/mockStorage';
 import { User } from '@/types/discovery';
 
 const DiscoverySetup = () => {
@@ -53,28 +54,25 @@ const DiscoverySetup = () => {
     if (!formData.accountName || !formData.contactName || !user) return;
 
     try {
-      // Create the discovery session
-      const { data: session, error } = await supabase
-        .from('discovery_sessions')
-        .insert({
-          account_name: formData.accountName,
-          contact_name: formData.contactName,
-          contact_role: formData.contactRole,
-          consultant_id: user.id,
-          status: 'in_progress'
-        })
-        .select()
-        .single();
+      // Use mock storage service for development
+      const session = await MockStorageService.createSession({
+        account_name: formData.accountName,
+        contact_name: formData.contactName,
+        contact_role: formData.contactRole,
+        consultant_id: user.id,
+        client_icp: 'Aerospace/Defense', // Will be updated on next page
+        business_area: '',
+        discovery_context: '',
+        solution_scope: 'Software consultation ($10K-$50K)',
+        next_step_goal: 'Technical deep-dive meeting'
+      });
 
-      if (error) {
-        console.error('Error creating session:', error);
-        return;
-      }
+      console.log('Created session:', session);
 
       // Navigate to ICP selection with session ID
       navigate(`/discovery/icp/${session.id}`);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error creating session:', error);
     }
   };
 

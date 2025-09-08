@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/lib/supabase';
+import { MockStorageService } from '@/lib/mockStorage';
 import { SolutionScope, NextStepGoal, DiscoverySession, ICP_CONFIGS } from '@/types/discovery';
 
 const DiscoveryContext = () => {
@@ -29,13 +30,14 @@ const DiscoveryContext = () => {
 
   const loadSession = async () => {
     try {
-      const { data: sessionData, error } = await supabase
-        .from('discovery_sessions')
-        .select('*')
-        .eq('id', sessionId)
-        .single();
+      if (!sessionId) {
+        navigate('/discovery/setup');
+        return;
+      }
 
-      if (error || !sessionData) {
+      const sessionData = await MockStorageService.getSession(sessionId);
+
+      if (!sessionData) {
         navigate('/discovery/setup');
         return;
       }
@@ -69,23 +71,22 @@ const DiscoveryContext = () => {
 
     try {
       // Update the session with context information
-      const { error } = await supabase
-        .from('discovery_sessions')
-        .update({
-          business_area: formData.businessArea,
-          discovery_context: formData.discoveryContext,
-          solution_scope: formData.solutionScope,
-          next_step_goal: formData.nextStepGoal
-        })
-        .eq('id', sessionId);
+      const updatedSession = await MockStorageService.updateSession(sessionId, {
+        business_area: formData.businessArea,
+        discovery_context: formData.discoveryContext,
+        solution_scope: formData.solutionScope as SolutionScope,
+        next_step_goal: formData.nextStepGoal as NextStepGoal
+      });
 
-      if (error) {
-        console.error('Error updating session:', error);
+      if (!updatedSession) {
+        console.error('Error updating session');
         return;
       }
 
       // Initialize discovery areas
       await initializeDiscoveryAreas();
+
+      console.log('Session updated, navigating to discovery interface');
 
       // Navigate to discovery interface
       navigate(`/discovery/session/${sessionId}`);
@@ -97,28 +98,12 @@ const DiscoveryContext = () => {
   const initializeDiscoveryAreas = async () => {
     if (!sessionId) return;
 
-    const discoveryAreas = [
-      'Current Technology Stack',
-      'Pain Points & Challenges',
-      'Business Impact & Urgency',
-      'Decision Process & Timeline',
-      'Budget & Resource Allocation',
-      'Technical Requirements',
-      'Integration & Infrastructure',
-      'Success Metrics & Outcomes'
-    ];
-
-    const areas = discoveryAreas.map((areaName, index) => ({
-      session_id: sessionId,
-      area_name: areaName,
-      completion_percentage: 0,
-      conversation_data: [],
-      is_active: index === 0 // First area starts active
-    }));
-
-    await supabase.from('discovery_areas').upsert(areas, {
-      onConflict: 'session_id,area_name'
-    });
+    try {
+      const areas = await MockStorageService.initializeDiscoveryAreas(sessionId);
+      console.log('Initialized discovery areas:', areas);
+    } catch (error) {
+      console.error('Error initializing discovery areas:', error);
+    }
   };
 
   const handleBack = () => {
