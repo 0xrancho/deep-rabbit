@@ -1,5 +1,7 @@
 import OpenAI from 'openai';
-import type { AssessmentRecord } from '@/lib/supabase';
+import type { DiscoverySession, DiscoveryNote, DiscoveryAreaName } from '@/types/discovery';
+import { ICP_CONFIGS } from '@/types/discovery';
+import { ElicitationDepthManager, getQuestionProgression, ELICITATION_PATTERNS } from './elicitationEngine';
 
 // Environment variables
 const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
@@ -11,16 +13,18 @@ let openai: OpenAI | null = null;
 
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';
+const allowBrowserMode = import.meta.env.VITE_ALLOW_BROWSER_AI === 'true';
 
-if (isBrowser) {
-  // SECURITY: Never initialize OpenAI client in the browser
+if (isBrowser && !allowBrowserMode) {
+  // SECURITY: Never initialize OpenAI client in the browser for production
   // This would expose your API key to attackers
   console.warn('🔒 OpenAI client disabled in browser for security. Using mock responses or server-side API.');
   openai = null;
 } else if (apiKey) {
-  // Only initialize in Node.js/server environment
+  // Initialize OpenAI client with browser support if allowed
   openai = new OpenAI({
-    apiKey
+    apiKey,
+    dangerouslyAllowBrowser: allowBrowserMode
   });
 } else {
   console.warn('OpenAI API key not found. Using mock responses.');
@@ -81,21 +85,31 @@ class OpenAIServiceError extends Error {
   }
 }
 
-// Rate limiting helper
-class RateLimiter {
+// Enhanced rate limiting for discovery sessions
+class DiscoveryRateLimiter {
   private requests: number[] = [];
-  private maxRequests = 5;
+  private maxRequests = 10; // Increased for discovery sessions
   private windowMs = 60000; // 1 minute
+  private sessionCount = 0;
+  private sessionStart = Date.now();
 
   canMakeRequest(): boolean {
     const now = Date.now();
     this.requests = this.requests.filter(time => now - time < this.windowMs);
     
+    // Session limits (100 requests per session)
+    if (this.sessionCount > 100) {
+      console.warn('🚨 Session limit reached - please refresh browser');
+      return false;
+    }
+    
+    // Rate limiting (10 per minute)
     if (this.requests.length >= this.maxRequests) {
       return false;
     }
     
     this.requests.push(now);
+    this.sessionCount++;
     return true;
   }
 
@@ -104,9 +118,14 @@ class RateLimiter {
     const oldestRequest = Math.min(...this.requests);
     return Math.max(0, this.windowMs - (Date.now() - oldestRequest));
   }
+
+  getSessionStats(): { count: number; sessionMinutes: number } {
+    const sessionMinutes = Math.round((Date.now() - this.sessionStart) / 60000);
+    return { count: this.sessionCount, sessionMinutes };
+  }
 }
 
-const rateLimiter = new RateLimiter();
+const rateLimiter = new DiscoveryRateLimiter();
 
 // Mock response generator for development
 const generateMockResponse = (analysisType: string, assessmentData: AssessmentRecord): any => {
@@ -171,7 +190,7 @@ const generateMockResponse = (analysisType: string, assessmentData: AssessmentRe
 const callOpenAI = async (
   prompt: string,
   systemPrompt?: string,
-  maxTokens: number = 2000
+  maxTokens: number = 8000
 ): Promise<string> => {
   if (!isOpenAIAvailable()) {
     throw new OpenAIServiceError(
@@ -345,61 +364,88 @@ export const generateReport = async (
     const startTime = Date.now();
 
     const prompt = `
-      Generate a comprehensive AI transformation assessment report for this client:
-
-      Client: ${assessmentData.company}
-      Contact: ${assessmentData.full_name}
-      Business Type: ${assessmentData.business_type}
-      Opportunity Focus: ${assessmentData.opportunity_focus}
-      Investment Level: ${assessmentData.investment_level}
+      Analyze this discovery session and market research to generate a strategic assessment report.
       
-      Current Challenges:
+      Your task is to EXTRACT and PRIORITIZE the most valuable intelligence from the discovery notes and research.
+
+      === CLIENT CONTEXT ===
+      Company: ${assessmentData.company}
+      Contact: ${assessmentData.full_name} (${assessmentData.team_description})
+      Industry: ${assessmentData.business_type}
+      Focus Area: ${assessmentData.opportunity_focus}
+      Budget Range: ${assessmentData.investment_level}
+      Next Step Goal: ${assessmentData.revenue_model}
+
+      === DISCOVERY INSIGHTS (FULL NOTES FROM SESSION) ===
+      ${assessmentData.process_description || 'Not captured'}
+
+      === PAIN POINTS & CHALLENGES (BY AREA) ===
       ${assessmentData.challenges?.join('\n') || 'Not specified'}
-      
-      Current Process:
-      ${assessmentData.process_description || 'Not specified'}
-      
-      Current Tech Stack:
-      ${assessmentData.tech_stack?.join(', ') || 'Not specified'}
-      
-      Team Structure:
-      ${assessmentData.team_description || 'Not specified'}
-      
-      Revenue Model:
-      ${assessmentData.revenue_model || 'Not specified'}
 
-      Generate a professional, actionable report with specific recommendations.
+      === ADDITIONAL CONTEXT & MARKET RESEARCH ===
+      ${assessmentData.additional_context || 'Not specified'}
+
+      === ANALYSIS REQUIREMENTS ===
+      1. EXTRACT CRITICAL INSIGHTS:
+         - Quantified pain points ($ amounts, time lost, efficiency gaps)
+         - Political dynamics and decision makers (who has veto power?)
+         - Failed previous solutions (what vendors/approaches didn't work?)
+         - Urgent timelines and deadlines mentioned
+         - Compliance/regulatory pressures
+         - Competitive threats or lost opportunities
+
+      2. CORRELATE WITH MARKET RESEARCH:
+         - Match discovered pain points with industry trends
+         - Identify relevant case studies from the research
+         - Extract cost benchmarks and ROI data
+         - Surface vendor/solution options that fit their needs
+         - Highlight regulatory developments that impact them
+
+      3. PRIORITIZE BY BUSINESS IMPACT:
+         - Rank issues by revenue impact or cost
+         - Identify quick wins vs strategic initiatives
+         - Consider political feasibility (based on decision dynamics)
+         - Account for timeline pressures and urgency
+
+      4. GENERATE ACTIONABLE INTELLIGENCE:
+         - Specific solution recommendations (not generic)
+         - Risk factors unique to their situation
+         - Political navigation strategy
+         - Competitive differentiation approach
+         - Concrete next steps matching their goal
+
+      Generate a report that demonstrates deep understanding of their SPECIFIC situation, not generic recommendations.
       Return JSON with this exact structure:
       {
         "id": "unique_report_id",
         "sections": {
           "executive_summary": {
             "title": "Executive Summary",
-            "content": "2-3 paragraph summary with key findings and ROI potential"
+            "content": "3-4 bullet points of the MOST CRITICAL findings: biggest pain point with $ impact, key decision maker dynamics, urgent timeline driver, and primary opportunity. Be specific with names, amounts, and dates from the discovery."
           },
           "current_state": {
-            "title": "Current State Analysis", 
-            "content": "Analysis of current processes, pain points, and inefficiencies"
+            "title": "Critical Pain Points & Quantified Impact", 
+            "content": "Extract and prioritize their specific pain points WITH NUMBERS: $7.7M ITAR costs, 3-5 day review cycles, 8% vs 34% win rates. Include failed solutions they've already tried. Reference specific systems and processes they mentioned."
           },
           "opportunities": {
-            "title": "AI Transformation Opportunities",
-            "content": "Specific AI applications relevant to their business"
+            "title": "Market Intelligence & Competitive Analysis",
+            "content": "Connect their specific challenges to market research findings. Include relevant case studies, competitor moves, regulatory changes, and industry benchmarks that directly relate to their situation. Surface vendor options that fit their constraints."
           },
           "recommendations": {
-            "title": "Recommended Solutions",
-            "content": "Prioritized recommendations matching their investment level"
+            "title": "Strategic Recommendations & Political Navigation",
+            "content": "Specific solutions that account for their political dynamics (Martha's veto, Sarah's influence), timeline pressures (38 days left), and failed vendors. Include HOW to navigate their specific decision process."
           },
           "roadmap": {
-            "title": "Implementation Roadmap",
-            "content": "Phased implementation plan with timelines"
+            "title": "Implementation Roadmap & Risk Mitigation",
+            "content": "Phased plan that addresses their urgent needs first, accounts for their constraints, and includes specific risk mitigations for issues they raised. Reference their actual timeline pressures and decision points."
           },
           "roi_projections": {
-            "title": "ROI Projections",
-            "content": "Estimated costs, savings, and payback period"
+            "title": "Business Case & Investment Analysis",
+            "content": "Tie ROI directly to their stated pain points: reducing $7.7M ITAR costs, improving 8% international win rate, preventing Sarah's departure. Use their actual numbers to build the case."
           },
           "next_steps": {
-            "title": "Next Steps",
-            "content": "Immediate actions and follow-up recommendations"
+            "title": "Immediate Actions & Deal Strategy",
+            "content": "Specific next steps that match their stated goal, navigate their political landscape, and address their urgency. Include WHO to engage, WHAT to demonstrate, and HOW to position against their evaluation criteria."
           }
         },
         "confidence_score": 0.0-1.0,
@@ -411,9 +457,18 @@ export const generateReport = async (
       }
     `;
 
-    const systemPrompt = `You are GABI, an expert AI transformation consultant. Generate specific, actionable, professional assessment reports. Focus on practical recommendations that match the client's investment level and business context. Always return valid JSON.`;
+    const systemPrompt = `You are an elite business intelligence analyst specializing in B2B software consulting. Your role is to:
 
-    const response = await callOpenAI(prompt, systemPrompt, 3000);
+1. EXTRACT critical business intelligence from discovery notes - look for specifics like dollar amounts, timeframes, names, failed vendors, political dynamics
+2. CORRELATE discovered pain points with market research findings - connect their specific challenges to industry trends and solutions
+3. PRIORITIZE insights by business impact - what will move the needle for THIS specific client based on their unique situation
+4. SURFACE hidden opportunities and risks - what did they reveal that they might not even realize is important?
+5. GENERATE hyper-specific recommendations - no generic advice, everything tied to their exact context
+
+Your analysis should demonstrate that you deeply understand their specific situation, political dynamics, urgency drivers, and unique constraints.
+Focus on actionable intelligence that will help close the deal and deliver value. Always return valid JSON.`;
+
+    const response = await callOpenAI(prompt, systemPrompt, 8000);
     const result = JSON.parse(response);
 
     // Add actual generation time
@@ -506,10 +561,196 @@ export const batchAnalyze = async (
   return results;
 };
 
+// Discovery question generation
+export interface DiscoveryQuestionRequest {
+  session: DiscoverySession;
+  currentArea: DiscoveryAreaName;
+  discoveryNotes: DiscoveryNote[];
+  currentNotes: string;
+}
+
+export interface DiscoveryQuestionResult {
+  question: string;
+  reasoning: string;
+}
+
+export const generateDiscoveryQuestion = async (
+  request: DiscoveryQuestionRequest
+): Promise<DiscoveryQuestionResult> => {
+  try {
+    if (mockResponses || !isOpenAIAvailable()) {
+      return generateMockDiscoveryQuestion(request);
+    }
+
+    const { session, currentArea, discoveryNotes, currentNotes } = request;
+    const icpConfig = ICP_CONFIGS[session.client_icp as keyof typeof ICP_CONFIGS];
+    const currentAreaNote = discoveryNotes.find(note => note.areaName === currentArea);
+
+    // Enhanced CBAP-grade elicitation prompt
+    const depthManager = new ElicitationDepthManager();
+    const currentDepth = currentAreaNote?.questions.length || 0;
+    const previousNotes = currentAreaNote?.questions.map(q => q.notes) || [];
+    
+    // Assess note quality if we have previous responses
+    const noteQuality = previousNotes.length > 0 ? 
+      depthManager.assessNoteQuality(previousNotes.join(' ')) :
+      { hasUncoveredComplexity: false, hasSpecificRequirements: false, hasQuantification: false, hasTechnicalDetail: false, overallQuality: 'low' as const };
+    
+    const depthGuidance = depthManager.getDepthGuidance(currentDepth, noteQuality);
+    const questionProgression = getQuestionProgression(currentArea, currentDepth, previousNotes);
+
+    const prompt = `
+      You are a Certified Business Analysis Professional conducting discovery.
+
+      PRE-KNOWLEDGE CONTEXT:
+      - Prospect: ${session.contact_name}, ${session.contact_role}
+      - Industry: ${session.client_icp} - ${icpConfig?.description}
+      - Business Area: ${session.business_area}
+      - Discovery Catalyst: ${session.discovery_context}
+      - Expected Solution Scope: ${session.solution_scope}
+      - Expected Next Step: ${session.next_step_goal}
+
+      CURRENT ELICITATION AREA: ${currentArea}
+      QUESTION DEPTH: ${currentDepth} (${currentDepth < 2 ? 'Foundation' : currentDepth < 4 ? 'Deep Dive' : 'Synthesis'})
+      
+      DEPTH GUIDANCE: ${depthGuidance}
+      PROGRESSION TEMPLATE: ${questionProgression}
+
+      ${currentDepth === 0 ? 
+        `Generate an initial question that:
+         1. Addresses ${currentArea} specifically for their ${session.business_area}
+         2. Connects directly to their discovery catalyst: "${session.discovery_context}"
+         3. Is specific enough to avoid generic answers
+         4. Uses industry terminology relevant to ${session.client_icp}
+         
+         Format: "Given your [specific context], how does [specific area focus] currently handle [specific challenge/process]?"
+         ` 
+        : 
+        `PREVIOUS RESPONSES IN THIS AREA:
+         ${currentAreaNote?.questions.map((q, i) => `Q${i+1}: ${q.questionText}\nResponse: ${q.notes}`).join('\n\n')}
+         
+         NOTE QUALITY ANALYSIS:
+         - Complexity uncovered: ${noteQuality.hasUncoveredComplexity ? 'Yes' : 'No'}
+         - Specific requirements: ${noteQuality.hasSpecificRequirements ? 'Yes' : 'No'}  
+         - Quantification present: ${noteQuality.hasQuantification ? 'Yes' : 'No'}
+         - Technical details: ${noteQuality.hasTechnicalDetail ? 'Yes' : 'No'}
+         - Overall quality: ${noteQuality.overallQuality}
+
+         Generate a DEEPER follow-up question that:
+         1. References specific details from their previous answers
+         2. ${!noteQuality.hasQuantification ? 'Probes for specific metrics, numbers, timeframes' : 'Builds on quantified insights'}
+         3. ${!noteQuality.hasTechnicalDetail && currentArea.includes('Tech') ? 'Digs into technical architecture and systems' : 'Explores business implications'}
+         4. ${!noteQuality.hasSpecificRequirements ? 'Uncovers concrete requirements and constraints' : 'Prioritizes competing requirements'}
+         5. Connects to the discovery catalyst: "${session.discovery_context}"
+         
+         Pattern: "You mentioned [specific detail from response]. This suggests [insight/risk/opportunity]. 
+         [Deeper probing question that connects to business impact]?"
+         `
+      }
+
+      CONTEXT FROM OTHER AREAS:
+      ${discoveryNotes.filter(note => note.areaName !== currentArea && note.questions.length > 0).map(note => `
+      ${note.areaName}: Key insight - ${note.questions[note.questions.length - 1]?.notes}
+      `).join('\n') || 'No other areas explored yet'}
+
+      The question should feel like it comes from an expert who deeply understands ${session.client_icp} industry challenges.
+      It must sound natural and conversational, not like a template.
+
+      Return JSON with this exact structure:
+      {
+        "question": "Your next strategic elicitation question",
+        "reasoning": "Why this specific question will uncover critical insights for ${session.solution_scope}"
+      }
+    `;
+
+    const systemPrompt = `You are an expert B2B software consultant specializing in ${session.client_icp} industry. Ask probing, strategic questions that uncover business pain, quantify impact, and identify specific opportunities. Focus on gathering actionable intelligence for solution design.`;
+
+    const response = await callOpenAI(prompt, systemPrompt, 2000);
+    const result = JSON.parse(response);
+
+    // Validate response structure
+    if (!result.question || typeof result.question !== 'string') {
+      throw new Error('Invalid question generation response from OpenAI');
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error('Discovery question generation failed:', error);
+    
+    // Fallback to mock question
+    return generateMockDiscoveryQuestion(request);
+  }
+};
+
+// Enhanced mock discovery question generator using elicitation intelligence
+const generateMockDiscoveryQuestion = (request: DiscoveryQuestionRequest): DiscoveryQuestionResult => {
+  const { session, currentArea, discoveryNotes, currentNotes } = request;
+  const currentAreaNote = discoveryNotes.find(note => note.areaName === currentArea);
+  const currentDepth = currentAreaNote?.questions.length || 0;
+  const previousNotes = currentAreaNote?.questions.map(q => q.notes) || [];
+  
+  // Use elicitation engine for intelligent mock responses
+  const depthManager = new ElicitationDepthManager();
+  const questionProgression = getQuestionProgression(currentArea, currentDepth, previousNotes);
+  
+  // If we have previous notes, assess quality and generate contextual follow-up
+  if (previousNotes.length > 0) {
+    const noteQuality = depthManager.assessNoteQuality(previousNotes.join(' '));
+    const lastNote = previousNotes[previousNotes.length - 1];
+    
+    // Extract key terms for contextual references
+    const systemMatch = lastNote.match(/\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)\b/);
+    const numberMatch = lastNote.match(/\d+\s*(?:hours?|days?|weeks?|months?|dollars?|\$|%)/);
+    const challengeMatch = lastNote.match(/(?:challenge|issue|problem|bottleneck):\s*([^.]+)/i);
+    
+    // Generate contextual follow-up based on note quality
+    let contextualQuestion = questionProgression;
+    
+    if (systemMatch && contextualQuestion.includes('[specific system mentioned]')) {
+      contextualQuestion = contextualQuestion.replace('[specific system mentioned]', systemMatch[0]);
+    }
+    
+    if (challengeMatch && contextualQuestion.includes('[specific pain mentioned]')) {
+      contextualQuestion = contextualQuestion.replace('[specific pain mentioned]', challengeMatch[1]);
+    }
+    
+    // Add industry-specific context
+    const icpConfig = ICP_CONFIGS[session.client_icp as keyof typeof ICP_CONFIGS];
+    if (icpConfig && contextualQuestion.includes('[compliance/security concern]')) {
+      contextualQuestion = contextualQuestion.replace('[compliance/security concern]', icpConfig.keywords[0]);
+    }
+    
+    return {
+      question: contextualQuestion,
+      reasoning: `Generated depth-${currentDepth} question based on ${noteQuality.overallQuality} quality notes, targeting ${!noteQuality.hasQuantification ? 'quantification' : !noteQuality.hasTechnicalDetail ? 'technical details' : 'requirements'}.`
+    };
+  }
+  
+  // For initial questions, use context-aware templates
+  const contextualQuestions = {
+    'Current Technology Stack': `Given your ${session.business_area} operations and ${session.discovery_context}, what systems currently manage your core technical processes?`,
+    'Pain Points & Challenges': `What's the biggest operational challenge in your ${session.business_area} that relates to ${session.discovery_context}?`,
+    'Business Impact & Urgency': `What business impact are you seeing from ${session.discovery_context} on your ${session.business_area} operations?`,
+    'Decision Process & Timeline': `For addressing ${session.discovery_context}, who needs to be involved in the decision process?`,
+    'Budget & Resource Allocation': `What's the business case driving investment in solving ${session.discovery_context}?`,
+    'Technical Requirements': `Given your ${session.client_icp} industry requirements, what are the non-negotiable technical constraints for addressing ${session.discovery_context}?`,
+    'Integration & Infrastructure': `What systems in your ${session.business_area} would need to integrate with any solution for ${session.discovery_context}?`,
+    'Success Metrics & Outcomes': `How would you measure the success of resolving ${session.discovery_context} in your ${session.business_area}?`
+  };
+  
+  const question = contextualQuestions[currentArea] || `Tell me about how ${session.discovery_context} affects your ${session.business_area} operations.`;
+  
+  return {
+    question,
+    reasoning: `Generated contextual initial question for ${currentArea}, incorporating discovery catalyst "${session.discovery_context}" and ${session.client_icp} industry context.`
+  };
+};
+
 export default {
   evaluateConfidence,
   generateReport,
   validateProcessDescription,
   batchAnalyze,
+  generateDiscoveryQuestion,
   isOpenAIAvailable
 };

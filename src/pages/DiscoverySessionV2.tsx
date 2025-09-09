@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { MockStorageService } from '@/lib/mockStorage';
+import { generateDiscoveryQuestion } from '@/services/openai';
 import { 
   DiscoverySession as SessionType, 
   DiscoveryArea,
@@ -117,7 +118,7 @@ const DiscoverySessionV2 = () => {
       // Set first area as active
       if (areas.length > 0) {
         setActiveArea(areas[0]);
-        loadAreaData(areas[0]);
+        await loadAreaData(areas[0]);
       }
     } catch (error) {
       console.error('Error loading discovery areas:', error);
@@ -146,7 +147,7 @@ const DiscoverySessionV2 = () => {
     setDiscoveryNotes(new Map(discoveryNotes));
   };
 
-  const loadAreaData = (area: DiscoveryArea) => {
+  const loadAreaData = async (area: DiscoveryArea) => {
     const existingNote = discoveryNotes.get(area.id);
     
     if (existingNote) {
@@ -154,12 +155,39 @@ const DiscoverySessionV2 = () => {
       setCurrentNotes(existingNote.currentNotes);
       const lastQuestion = existingNote.questions.length > 0 
         ? existingNote.questions[existingNote.questions.length - 1].questionText
-        : getInitialQuestion(area.area_name);
+        : await generateInitialQuestion(area.area_name);
       setCurrentQuestion(lastQuestion);
     } else {
-      // New area - set initial question
+      // New area - generate AI-powered initial question
       setCurrentNotes('');
-      setCurrentQuestion(getInitialQuestion(area.area_name));
+      const initialQuestion = await generateInitialQuestion(area.area_name);
+      setCurrentQuestion(initialQuestion);
+    }
+  };
+
+  const generateInitialQuestion = async (areaName: string): Promise<string> => {
+    if (!session) {
+      return getInitialQuestion(areaName);
+    }
+    
+    setIsGeneratingQuestion(true);
+    try {
+      // Use OpenAI to generate contextual initial question based on pre-knowledge
+      const result = await generateDiscoveryQuestion({
+        session,
+        currentArea: areaName,
+        discoveryNotes: Array.from(discoveryNotes.values()),
+        currentNotes: '' // No current notes for initial question
+      });
+      
+      console.log('🤖 Generated initial question for', areaName, '- Reasoning:', result.reasoning);
+      return result.question;
+    } catch (error) {
+      console.error('❌ Error generating initial question:', error);
+      // Fallback to template question
+      return getInitialQuestion(areaName);
+    } finally {
+      setIsGeneratingQuestion(false);
     }
   };
 
@@ -175,7 +203,7 @@ const DiscoverySessionV2 = () => {
     return `Tell me about your ${areaName.toLowerCase()}.`;
   };
 
-  const handleAreaSelect = (area: DiscoveryArea) => {
+  const handleAreaSelect = async (area: DiscoveryArea) => {
     if (area.id === activeArea?.id) return;
     
     // Save current area notes before switching
@@ -184,7 +212,7 @@ const DiscoverySessionV2 = () => {
     }
     
     setActiveArea(area);
-    loadAreaData(area);
+    await loadAreaData(area);
   };
 
   const saveCurrentAreaNotes = () => {
@@ -258,49 +286,34 @@ const DiscoverySessionV2 = () => {
   };
 
   const generateNextQuestion = async (area: DiscoveryArea, note: DiscoveryNote): Promise<string> => {
-    // In production, this would call Claude API
-    // For now, use contextual questions based on area and progress
-    
-    const questionCount = note.questions.length;
-    const areaConfig = DISCOVERY_AREA_PROMPTS[area.area_name as keyof typeof DISCOVERY_AREA_PROMPTS];
-    const icpConfig = session?.client_icp ? ICP_CONFIGS[session.client_icp as keyof typeof ICP_CONFIGS] : null;
-    
-    // Use deeper questions as we progress
-    if (questionCount === 0 && areaConfig?.initialQuestions[1]) {
-      return areaConfig.initialQuestions[1];
-    } else if (questionCount === 1 && areaConfig?.initialQuestions[2]) {
-      return areaConfig.initialQuestions[2];
+    if (!session) {
+      return "What would you like to explore about this topic?";
     }
-    
-    // Generate industry-specific follow-ups
-    if (icpConfig && area.area_name === 'Current Technology Stack') {
-      const industryQuestions = Object.values(icpConfig.questions);
-      if (industryQuestions[questionCount % industryQuestions.length]) {
-        return industryQuestions[questionCount % industryQuestions.length];
+
+    try {
+      // Use OpenAI to generate intelligent questions
+      const result = await generateDiscoveryQuestion({
+        session,
+        currentArea: area.area_name,
+        discoveryNotes: Array.from(discoveryNotes.values()),
+        currentNotes: currentNotes
+      });
+      
+      console.log('Generated question reasoning:', result.reasoning);
+      return result.question;
+    } catch (error) {
+      console.error('Error generating question with OpenAI:', error);
+      
+      // Fallback to basic questions if OpenAI fails
+      const questionCount = note.questions.length;
+      const areaConfig = DISCOVERY_AREA_PROMPTS[area.area_name as keyof typeof DISCOVERY_AREA_PROMPTS];
+      
+      if (questionCount < areaConfig?.initialQuestions.length) {
+        return areaConfig.initialQuestions[questionCount];
       }
+      
+      return `Can you tell me more about your experience with ${area.area_name.toLowerCase()}?`;
     }
-    
-    // Generic follow-up based on area
-    const followUps: Record<string, string[]> = {
-      'Current Technology Stack': [
-        'How do these systems integrate with each other?',
-        'What are the main pain points with your current technology?',
-        'How much time does your team spend on manual processes?'
-      ],
-      'Pain Points & Challenges': [
-        'How is this challenge impacting your business metrics?',
-        'What workarounds are you currently using?',
-        'How much is this costing you in terms of time and resources?'
-      ],
-      'Business Impact & Urgency': [
-        'What happens if this problem isn\'t solved in the next 6 months?',
-        'How is this affecting your competitive position?',
-        'What\'s the opportunity cost of not addressing this now?'
-      ]
-    };
-    
-    const areaFollowUps = followUps[area.area_name] || ['Can you elaborate on that?'];
-    return areaFollowUps[questionCount % areaFollowUps.length];
   };
 
   const updateProgress = (areaName: string) => {
@@ -353,13 +366,12 @@ const DiscoverySessionV2 = () => {
     // 3. Send email to consultant
     
     console.log('Submitting discovery with notes:', Array.from(discoveryNotes.values()));
-    alert('Discovery submitted! Analysis will be sent to your email.');
     
-    // Navigate to a summary page
-    navigate(`/discovery/summary/${sessionId}`);
+    // Navigate to scoping review before generating report
+    navigate(`/discovery/scoping/${sessionId}`);
   };
 
-  const progressPercentage = (progressTracking.completedAssessments / progressTracking.totalAssessments) * 100;
+  const progressPercentage = Math.min((progressTracking.completedAssessments / progressTracking.totalAssessments) * 100, 100);
 
   if (isLoading) {
     return (
@@ -476,23 +488,21 @@ const DiscoverySessionV2 = () => {
         <div className="flex-1 flex flex-col">
           {activeArea ? (
             <>
-              {/* ASSESS Button */}
-              <div className="p-6 border-b border-glass-border">
-                <Button
-                  onClick={handleAssess}
-                  disabled={!currentNotes.trim() || isGeneratingQuestion}
-                  className="w-full py-6 text-lg font-bold bg-gradient-to-r from-sep-accent to-sep-primary hover:from-sep-accent/90 hover:to-sep-primary/90 text-white"
-                >
-                  {isGeneratingQuestion ? 'Generating Question...' : 'ASSESS'}
-                </Button>
-              </div>
-
               {/* Current Question */}
-              <div className="p-6 bg-glass-bg/50">
-                <h3 className="text-sm font-medium text-text-secondary mb-2">Current Question:</h3>
-                <p className="text-lg text-text-primary font-medium">
-                  {currentQuestion}
-                </p>
+              <div className="p-6 bg-glass-bg/50 border-b border-glass-border">
+                <h3 className="text-sm font-medium text-text-secondary mb-2 font-['Inter']">Current Question:</h3>
+                {isGeneratingQuestion ? (
+                  <div className="flex items-center space-x-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-sep-primary"></div>
+                    <p className="text-lg text-text-secondary font-mono italic">
+                      🤖 Generating contextual question based on your profile...
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-lg text-text-primary font-medium font-mono">
+                    {currentQuestion}
+                  </p>
+                )}
               </div>
 
               {/* Discovery Notes */}
@@ -503,12 +513,14 @@ const DiscoverySessionV2 = () => {
                 {currentAreaNote?.questions.map((question, index) => (
                   <div key={question.id} className="mb-4">
                     <div
-                      className={`border-l-4 border-sep-primary bg-sep-light rounded-lg overflow-hidden ${
-                        question.isCollapsed ? 'h-12' : ''
+                      className={`rounded-lg overflow-hidden ${
+                        question.isCollapsed 
+                          ? 'bg-glass-bg/80 border border-glass-border h-12' 
+                          : 'bg-glass-bg/80 border border-glass-border'
                       }`}
                     >
                       <div
-                        className="flex items-center px-4 py-3 bg-sep-light/50 cursor-pointer hover:bg-sep-light/70 transition-colors"
+                        className="flex items-center px-4 py-3 cursor-pointer transition-colors bg-glass-bg/80 hover:bg-glass-bg/90"
                         onClick={() => toggleQuestionBlock(activeArea.id, question.id)}
                       >
                         {question.isCollapsed ? (
@@ -516,12 +528,12 @@ const DiscoverySessionV2 = () => {
                         ) : (
                           <ChevronDown className="w-4 h-4 mr-2 text-text-secondary" />
                         )}
-                        <span className="text-sm text-text-secondary italic">
+                        <span className="text-sm text-text-secondary italic font-mono">
                           (Answers to: {question.questionText.slice(0, 60)}...)
                         </span>
                       </div>
                       {!question.isCollapsed && (
-                        <div className="px-4 py-3 bg-white whitespace-pre-wrap">
+                        <div className="px-4 py-3 bg-black text-text-primary whitespace-pre-wrap font-mono">
                           {question.notes}
                         </div>
                       )}
@@ -535,9 +547,20 @@ const DiscoverySessionV2 = () => {
                     value={currentNotes}
                     onChange={(e) => setCurrentNotes(e.target.value)}
                     placeholder={`Take notes about ${activeArea.area_name.toLowerCase()}...\n\nPress Enter to add new lines. Click ASSESS when ready for the next question.`}
-                    className="w-full min-h-[300px] p-4 border-0 focus:ring-0 resize-none"
+                    className="w-full min-h-[300px] p-4 border-0 focus:ring-0 resize-none font-mono"
                     style={{ outline: 'none', boxShadow: 'none' }}
                   />
+                </div>
+
+                {/* ASSESS Button - Right below notes box */}
+                <div className="mt-4">
+                  <Button
+                    onClick={handleAssess}
+                    disabled={!currentNotes.trim() || isGeneratingQuestion}
+                    className="w-full py-6 text-lg font-bold bg-gradient-to-r from-red-600/80 to-red-500/80 hover:from-red-600/90 hover:to-red-500/90 text-white"
+                  >
+                    {isGeneratingQuestion ? 'Generating Question...' : 'ASSESS'}
+                  </Button>
                 </div>
               </div>
 
@@ -548,7 +571,7 @@ const DiscoverySessionV2 = () => {
                     onClick={handleSubmit}
                     className="w-full py-4 bg-gradient-to-r from-success to-sep-secondary hover:from-success/90 hover:to-sep-secondary/90 text-white font-semibold"
                   >
-                    Complete Discovery & Generate Analysis
+                    Submit Discovery
                   </Button>
                 </div>
               )}

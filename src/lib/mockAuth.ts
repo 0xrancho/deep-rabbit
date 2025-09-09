@@ -5,8 +5,8 @@ import { User, Organization } from '@/types/discovery';
 
 const MOCK_ORGANIZATION: Organization = {
   id: '550e8400-e29b-41d4-a716-446655440000',
-  name: 'SEP Indiana',
-  domain: 'sep.com',
+  name: 'Discovery Wizard Consulting',
+  domain: 'discoverywizard.com',
   created_at: new Date('2024-01-01'),
   updated_at: new Date('2024-01-01')
 };

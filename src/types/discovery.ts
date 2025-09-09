@@ -1,4 +1,4 @@
-// SEP Discovery Wizard Type Definitions
+// Discovery Wizard Type Definitions
 
 export interface Organization {
   id: string;

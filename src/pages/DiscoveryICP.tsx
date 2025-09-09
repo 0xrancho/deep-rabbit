@@ -93,7 +93,7 @@ const DiscoveryICP = () => {
       <header className="border-b border-glass-border bg-glass-bg/50 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold sep-text">SEP Discovery Wizard</h1>
+            <h1 className="text-2xl font-bold sep-text">Discovery Wizard</h1>
             {session && (
               <div className="text-sm text-text-secondary">
                 {session.account_name} • {session.contact_name}
