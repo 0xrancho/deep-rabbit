@@ -676,6 +676,58 @@ const LandingDemo = () => {
           )}
         </Card>
 
+        {/* How It Works Section */}
+        <div className="how-it-works-section mt-16 mb-12 max-w-4xl mx-auto">
+          <h3 className="text-2xl font-bold text-white text-center mb-12">
+            What happens under the hood
+          </h3>
+          
+          {/* Simple 3-panel illustration */}
+          <div className="process-panels grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div className="panel text-center p-6 bg-glass-bg/30 border border-glass-border/30 rounded-xl backdrop-blur-sm">
+              <div className="icon text-4xl mb-4">🧠</div>
+              <h4 className="text-lg font-semibold text-white mb-3">Intelligent Orchestration</h4>
+              <p className="text-text-secondary text-sm leading-relaxed">
+                8 elicitation areas with context-aware progression tracking
+              </p>
+            </div>
+            
+            <div className="panel text-center p-6 bg-glass-bg/30 border border-glass-border/30 rounded-xl backdrop-blur-sm">
+              <div className="icon text-4xl mb-4">🔍</div>
+              <h4 className="text-lg font-semibold text-white mb-3">Real-time Enrichment</h4>
+              <p className="text-text-secondary text-sm leading-relaxed">
+                Search, scrape, and validate answers as they emerge
+              </p>
+            </div>
+            
+            <div className="panel text-center p-6 bg-glass-bg/30 border border-glass-border/30 rounded-xl backdrop-blur-sm">
+              <div className="icon text-4xl mb-4">📊</div>
+              <h4 className="text-lg font-semibold text-white mb-3">Structured Extraction</h4>
+              <p className="text-text-secondary text-sm leading-relaxed">
+                Export to CRM via API • Full audit trail • Summary reports
+              </p>
+            </div>
+          </div>
+          
+          <p className="coming-soon-note text-center text-text-muted text-sm">
+            v1.0: Consultant-led Discovery (Fall 2025)<br/>
+            v1.2: Client-led Assessments (Spring 2026)
+          </p>
+        </div>
+
+        {/* Trust Markers */}
+        <div className="trust-markers flex flex-wrap justify-center gap-6 mb-12 max-w-3xl mx-auto">
+          <span className="flex items-center gap-2 text-text-secondary text-sm bg-glass-bg/20 px-4 py-2 rounded-full border border-glass-border/20">
+            🔒 SOC2 Compliant
+          </span>
+          <span className="flex items-center gap-2 text-text-secondary text-sm bg-glass-bg/20 px-4 py-2 rounded-full border border-glass-border/20">
+            🔐 Your data never trains our models
+          </span>
+          <span className="flex items-center gap-2 text-text-secondary text-sm bg-glass-bg/20 px-4 py-2 rounded-full border border-glass-border/20">
+            🌐 API-first architecture
+          </span>
+        </div>
+
         {/* Waitlist Section */}
         {currentStage === 'input' && (
           <div className="mt-12 text-center">
