@@ -19,4 +19,13 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: mode === 'production' 
+          ? path.resolve(__dirname, './src/main.production.tsx')
+          : path.resolve(__dirname, './src/main.tsx')
+      }
+    }
+  }
 }));

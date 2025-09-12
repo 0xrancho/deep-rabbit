@@ -3,6 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import deepRabbitLogo from '@/assets/bunny-logo.png';
+import orchestrationIcon from '@/assets/orchestration.png';
+import enrichmentIcon from '@/assets/enrichment.png';
+import extractionIcon from '@/assets/extraction.png';
 import { conversationGenerator } from '@/services/conversationGenerator';
 
 const LandingDemo = () => {
@@ -206,7 +209,7 @@ const LandingDemo = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen" style={{ backgroundColor: '#1a1a1a' }}>
       {/* Navigation */}
       <header className="border-b border-glass-border bg-glass-bg/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-4">
@@ -685,7 +688,9 @@ const LandingDemo = () => {
           {/* Simple 3-panel illustration */}
           <div className="process-panels grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div className="panel text-center p-6 bg-glass-bg/30 border border-glass-border/30 rounded-xl backdrop-blur-sm">
-              <div className="icon text-4xl mb-4">🧠</div>
+              <div className="icon mb-4">
+                <img src={orchestrationIcon} alt="Intelligent Orchestration" className="w-24 h-24 mx-auto" />
+              </div>
               <h4 className="text-lg font-semibold text-white mb-3">Intelligent Orchestration</h4>
               <p className="text-text-secondary text-sm leading-relaxed">
                 8 elicitation areas with context-aware progression tracking
@@ -693,7 +698,9 @@ const LandingDemo = () => {
             </div>
             
             <div className="panel text-center p-6 bg-glass-bg/30 border border-glass-border/30 rounded-xl backdrop-blur-sm">
-              <div className="icon text-4xl mb-4">🔍</div>
+              <div className="icon mb-4">
+                <img src={enrichmentIcon} alt="Real-time Enrichment" className="w-24 h-24 mx-auto" />
+              </div>
               <h4 className="text-lg font-semibold text-white mb-3">Real-time Enrichment</h4>
               <p className="text-text-secondary text-sm leading-relaxed">
                 Search, scrape, and validate answers as they emerge
@@ -701,7 +708,9 @@ const LandingDemo = () => {
             </div>
             
             <div className="panel text-center p-6 bg-glass-bg/30 border border-glass-border/30 rounded-xl backdrop-blur-sm">
-              <div className="icon text-4xl mb-4">📊</div>
+              <div className="icon mb-4">
+                <img src={extractionIcon} alt="Structured Extraction" className="w-24 h-24 mx-auto" />
+              </div>
               <h4 className="text-lg font-semibold text-white mb-3">Structured Extraction</h4>
               <p className="text-text-secondary text-sm leading-relaxed">
                 Export to CRM via API • Full audit trail • Summary reports
