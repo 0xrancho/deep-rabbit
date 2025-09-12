@@ -109,14 +109,14 @@ export interface ProspectDiscovery {
 }
 
 export type DiscoveryAreaName = 
-  | 'Current Technology Stack'
+  | 'Current State Assessment'
   | 'Pain Points & Challenges'
-  | 'Business Impact & Urgency'
+  | 'Desired Future State'
+  | 'Constraints & Requirements'
   | 'Decision Process & Timeline'
-  | 'Budget & Resource Allocation'
-  | 'Technical Requirements'
-  | 'Integration & Infrastructure'
-  | 'Success Metrics & Outcomes';
+  | 'Budget & Resources'
+  | 'Success Metrics'
+  | 'Stakeholders & Politics';
 
 export interface DiscoveryArea {
   id: string;
@@ -262,79 +262,79 @@ export const ICP_CONFIGS = {
 
 // Discovery Area Configurations
 export const DISCOVERY_AREAS: DiscoveryAreaName[] = [
-  'Current Technology Stack',
+  'Current State Assessment',
   'Pain Points & Challenges',
-  'Business Impact & Urgency',
+  'Desired Future State',
+  'Constraints & Requirements',
   'Decision Process & Timeline',
-  'Budget & Resource Allocation',
-  'Technical Requirements',
-  'Integration & Infrastructure',
-  'Success Metrics & Outcomes'
+  'Budget & Resources',
+  'Success Metrics',
+  'Stakeholders & Politics'
 ];
 
 export const DISCOVERY_AREA_PROMPTS = {
-  'Current Technology Stack': {
-    description: 'Understand their existing systems, languages, frameworks, and infrastructure',
+  'Current State Assessment': {
+    description: 'Understand how they operate today - systems, processes, and workflows',
     initialQuestions: [
-      "What's your current technology stack?",
-      'What programming languages and frameworks are you using?',
-      'How is your infrastructure currently set up?'
+      'Walk me through how this area operates today?',
+      'What systems, processes, or tools currently handle this?',
+      'How does the workflow actually function day-to-day?'
     ]
   },
   'Pain Points & Challenges': {
-    description: 'Identify technical and business challenges they face',
+    description: 'Identify what is broken, inefficient, or causing problems',
     initialQuestions: [
-      'What are your biggest technical challenges right now?',
-      'Where are the bottlenecks in your current system?',
+      'What are your biggest bottlenecks or frustrations in this area?',
+      'Where do things break down or require workarounds?',
       'What problems keep coming up repeatedly?'
     ]
   },
-  'Business Impact & Urgency': {
-    description: 'Quantify the business impact and timeline pressures',
+  'Desired Future State': {
+    description: 'Understand their vision and goals for the ideal future state',
     initialQuestions: [
-      'How is this impacting your business today?',
-      'What happens if nothing changes?',
-      "What's driving the urgency for a solution?"
+      'What would success look like in 12 months?',
+      'If you could wave a magic wand, how would this work ideally?',
+      'What capabilities do you wish you had that you don\'t have today?'
+    ]
+  },
+  'Constraints & Requirements': {
+    description: 'Gather non-negotiable requirements and limiting factors',
+    initialQuestions: [
+      'What are the non-negotiable requirements for any solution?',
+      'What regulatory, compliance, or policy constraints apply?',
+      'What technical or business constraints do we need to work within?'
     ]
   },
   'Decision Process & Timeline': {
     description: 'Map out their decision-making process and timeline',
     initialQuestions: [
-      "What's your decision-making process for this project?",
-      'Who needs to be involved in the decision?',
-      'What timeline are you working with?'
+      'Who needs to approve any solution or changes?',
+      'What criteria will be used to evaluate options?',
+      'What timeline are you working with for making decisions?'
     ]
   },
-  'Budget & Resource Allocation': {
+  'Budget & Resources': {
     description: 'Understand budget constraints and resource availability',
     initialQuestions: [
-      'What budget range have you allocated for this initiative?',
-      'How are you thinking about ROI for this investment?',
-      'What resources do you have available internally?'
+      'What budget range has been discussed for this initiative?',
+      'How are you thinking about ROI and cost justification?',
+      'What internal resources do you have available?'
     ]
   },
-  'Technical Requirements': {
-    description: 'Gather specific technical requirements and constraints',
-    initialQuestions: [
-      'What are your must-have technical requirements?',
-      'What constraints do we need to work within?',
-      'What are your performance and scalability needs?'
-    ]
-  },
-  'Integration & Infrastructure': {
-    description: 'Understand integration needs and infrastructure requirements',
-    initialQuestions: [
-      'What systems will this need to integrate with?',
-      'What are your deployment preferences?',
-      'How do you handle DevOps and CI/CD currently?'
-    ]
-  },
-  'Success Metrics & Outcomes': {
+  'Success Metrics': {
     description: 'Define what success looks like and how it will be measured',
     initialQuestions: [
-      'How will you measure success for this project?',
-      'What outcomes are you expecting?',
-      'What KPIs will this impact?'
+      'How will you measure success for this initiative?',
+      'What specific metrics or outcomes are you targeting?',
+      'How do you track performance in this area today?'
+    ]
+  },
+  'Stakeholders & Politics': {
+    description: 'Understand who influences decisions and organizational dynamics',
+    initialQuestions: [
+      'Who else would be impacted by changes in this area?',
+      'Which groups or departments have stakes in how this works?',
+      'What internal dynamics could influence the success of changes?'
     ]
   }
 } as const;

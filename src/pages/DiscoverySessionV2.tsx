@@ -7,6 +7,8 @@ import { Progress } from '@/components/ui/progress';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { MockStorageService } from '@/lib/mockStorage';
 import { generateDiscoveryQuestion } from '@/services/openai';
+import { getCurrentUser } from '@/lib/supabase-auth';
+import AppHeader from '@/components/AppHeader';
 import { 
   DiscoverySession as SessionType, 
   DiscoveryArea,
@@ -22,6 +24,7 @@ const DiscoverySessionV2 = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const [session, setSession] = useState<SessionType | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [discoveryAreas, setDiscoveryAreas] = useState<DiscoveryArea[]>([]);
   const [activeArea, setActiveArea] = useState<DiscoveryArea | null>(null);
   const [discoveryNotes, setDiscoveryNotes] = useState<Map<string, DiscoveryNote>>(new Map());
@@ -36,6 +39,55 @@ const DiscoverySessionV2 = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  const loadUser = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        navigate('/auth');
+        return;
+      }
+      setUser(currentUser);
+    } catch (error) {
+      console.error('Error loading user:', error);
+      navigate('/auth');
+    }
+  };
+
+  const handleAbandonSession = async () => {
+    // During assessment portion, save current progress before abandoning
+    if (discoveryNotes.size > 0 || currentNotes.trim() !== '') {
+      await saveCurrentProgress();
+      // Mark session as saved but abandoned
+      if (session) {
+        await MockStorageService.updateSession(session.id, {
+          status: 'abandoned',
+          last_saved_at: new Date().toISOString()
+        });
+      }
+    }
+    navigate('/dashboard');
+  };
+
+  const saveCurrentProgress = async () => {
+    if (activeArea && currentNotes.trim() !== '' && session) {
+      try {
+        // Save current area notes
+        await MockStorageService.saveDiscoveryNote({
+          session_id: session.id,
+          area: activeArea.name,
+          notes: currentNotes,
+          question_blocks: activeArea.questionBlocks || []
+        });
+      } catch (error) {
+        console.error('Error saving progress:', error);
+      }
+    }
+  };
 
   useEffect(() => {
     if (sessionId) {
@@ -389,30 +441,25 @@ const DiscoverySessionV2 = () => {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      {/* Header */}
-      <header className="border-b border-glass-border bg-glass-bg/50 backdrop-blur-sm flex-shrink-0">
+      <AppHeader 
+        title={session ? `${session.account_name} - ${session.contact_name}` : "Discovery Session"}
+        user={user}
+      />
+      
+      {/* Progress Bar */}
+      <div className="border-b border-glass-border bg-glass-bg/50 backdrop-blur-sm flex-shrink-0">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold sep-text">Discovery Session</h1>
-              {session && (
-                <div className="text-sm text-text-secondary mt-1">
-                  {session.account_name} • {session.contact_name} • {selectedICP?.label}
-                </div>
-              )}
+            <div className="text-sm text-text-secondary">
+              {selectedICP?.label && `${selectedICP.label} • `}Discovery Progress: {progressTracking.completedAssessments}/{progressTracking.totalAssessments} Assessments
             </div>
-            <div className="text-right">
-              <div className="text-sm text-text-secondary mb-1">
-                Discovery Progress: {progressTracking.completedAssessments}/{progressTracking.totalAssessments} Assessments
-              </div>
-              <div className="flex items-center space-x-3">
-                <Progress value={progressPercentage} className="w-48" />
-                <span className="text-text-primary font-medium">{Math.round(progressPercentage)}%</span>
-              </div>
+            <div className="flex items-center space-x-3">
+              <Progress value={progressPercentage} className="w-48" />
+              <span className="text-text-primary font-medium">{Math.round(progressPercentage)}%</span>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="flex flex-1">
         {/* Left Sidebar - Discovery Areas */}

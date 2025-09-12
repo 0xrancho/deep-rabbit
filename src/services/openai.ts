@@ -728,14 +728,14 @@ const generateMockDiscoveryQuestion = (request: DiscoveryQuestionRequest): Disco
   
   // For initial questions, use context-aware templates
   const contextualQuestions = {
-    'Current Technology Stack': `Given your ${session.business_area} operations and ${session.discovery_context}, what systems currently manage your core technical processes?`,
+    'Current State Assessment': `Given your ${session.business_area} operations and ${session.discovery_context}, walk me through how things currently work in this area?`,
     'Pain Points & Challenges': `What's the biggest operational challenge in your ${session.business_area} that relates to ${session.discovery_context}?`,
-    'Business Impact & Urgency': `What business impact are you seeing from ${session.discovery_context} on your ${session.business_area} operations?`,
+    'Desired Future State': `What would success look like for ${session.discovery_context} in your ${session.business_area} operations?`,
+    'Constraints & Requirements': `Given your ${session.client_icp} industry requirements, what are the non-negotiable constraints for addressing ${session.discovery_context}?`,
     'Decision Process & Timeline': `For addressing ${session.discovery_context}, who needs to be involved in the decision process?`,
-    'Budget & Resource Allocation': `What's the business case driving investment in solving ${session.discovery_context}?`,
-    'Technical Requirements': `Given your ${session.client_icp} industry requirements, what are the non-negotiable technical constraints for addressing ${session.discovery_context}?`,
-    'Integration & Infrastructure': `What systems in your ${session.business_area} would need to integrate with any solution for ${session.discovery_context}?`,
-    'Success Metrics & Outcomes': `How would you measure the success of resolving ${session.discovery_context} in your ${session.business_area}?`
+    'Budget & Resources': `What's the business case driving investment in solving ${session.discovery_context}?`,
+    'Success Metrics': `How would you measure the success of resolving ${session.discovery_context} in your ${session.business_area}?`,
+    'Stakeholders & Politics': `Who else in your organization would be impacted by changes to ${session.discovery_context} in ${session.business_area}?`
   };
   
   const question = contextualQuestions[currentArea] || `Tell me about how ${session.discovery_context} affects your ${session.business_area} operations.`;

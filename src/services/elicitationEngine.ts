@@ -92,42 +92,65 @@ export class ElicitationDepthManager {
 }
 
 /**
- * Elicitation patterns for each discovery area
+ * Universal elicitation areas for all B2B services
+ * These are the 8 core discovery categories that apply across all industries and services
+ */
+export const UNIVERSAL_ELICITATION_AREAS = [
+  'Current State Assessment',      // What exists now
+  'Pain Points & Challenges',      // What's broken
+  'Desired Future State',          // Where they want to be
+  'Constraints & Requirements',    // What limits the solution
+  'Decision Process & Timeline',   // How/when they'll decide
+  'Budget & Resources',            // What they can invest
+  'Success Metrics',               // How they'll measure success
+  'Stakeholders & Politics'        // Who influences/blocks
+] as const;
+
+/**
+ * Elicitation patterns for each universal discovery area
  */
 export const ELICITATION_PATTERNS = {
-  "Current Technology Stack": {
-    depth0: "What systems currently handle [specific process from context]?",
-    depth1: "Given [specific system mentioned], how does [compliance/integration concern] affect data flow?",
-    depth2: "When [specific scenario from notes], what breaks down or requires manual intervention?",
-    depth3: "Walk me through what happens when [edge case scenario] - who gets involved and what's the workaround?",
-    depth4: "If we had to diagram the technical flow for [critical process], what are the hidden dependencies?",
+  "Current State Assessment": {
+    depth0: "Walk me through how [business area from context] operates today?",
+    depth1: "What systems, processes, or tools currently handle [specific process mentioned]?",
+    depth2: "When [specific scenario from notes], what's the current workflow step-by-step?",
+    depth3: "What happens when [edge case scenario] - who gets involved and what's the workaround?",
+    depth4: "If I shadowed your team for a day, what would surprise me about how this really works?",
   },
   
   "Pain Points & Challenges": {
-    depth0: "What's the biggest bottleneck in [business area from context]?",
-    depth1: "How many hours/dollars does [specific pain mentioned] cost monthly?",
+    depth0: "What's the biggest bottleneck or frustration in [business area from context]?",
+    depth1: "How much time/money does [specific pain mentioned] cost you monthly?",
     depth2: "When did this problem first surface, and what triggered it?",
     depth3: "What would happen to [business metric] if this wasn't fixed in 6 months?",
     depth4: "Who internally is most impacted when [specific pain point] occurs?",
   },
   
-  "Business Impact & Urgency": {
-    depth0: "What's driving the urgency to solve [discovery context]?",
-    depth1: "What specific event or deadline creates the most pressure?",
-    depth2: "What's at risk if you miss [specific deadline mentioned]?",
-    depth3: "How does [specific risk] cascade to other business areas?",
-    depth4: "What's the opportunity cost of maintaining status quo for another quarter?",
+  "Desired Future State": {
+    depth0: "What would success look like for [business area from context] in 12 months?",
+    depth1: "If you could wave a magic wand, how would [specific process mentioned] work ideally?",
+    depth2: "What capabilities do you wish you had that you don't have today?",
+    depth3: "How would [specific improvement] change day-to-day operations for your team?",
+    depth4: "What would be possible if [constraint mentioned] was no longer an issue?",
+  },
+  
+  "Constraints & Requirements": {
+    depth0: "What are the non-negotiable requirements for any solution?",
+    depth1: "How does [specific requirement mentioned] relate to [compliance/regulatory concern]?",
+    depth2: "What happens if [specific requirement] can't be met exactly as specified?",
+    depth3: "Which requirement would you compromise on first if you had to choose?",
+    depth4: "What constraints aren't obvious but could derail a project later?",
   },
   
   "Decision Process & Timeline": {
     depth0: "Who needs to approve a solution for [solution scope]?",
-    depth1: "What criteria will [specific stakeholder mentioned] use to evaluate success?",
-    depth2: "What happened the last time you evaluated similar solutions?",
+    depth1: "What criteria will [specific stakeholder mentioned] use to evaluate options?",
+    depth2: "What happened the last time you made a similar decision?",
     depth3: "What internal politics or competing priorities could affect this decision?",
     depth4: "If [key stakeholder] says no, what's the escalation path?",
   },
   
-  "Budget & Resource Allocation": {
+  "Budget & Resources": {
     depth0: "What's the cost of maintaining the current [problem state from context]?",
     depth1: "What budget range has been discussed for [solution scope]?",
     depth2: "How does [specific budget mentioned] compare to other initiatives' funding?",
@@ -135,28 +158,20 @@ export const ELICITATION_PATTERNS = {
     depth4: "What would justify exceeding the initial budget by 20-30%?",
   },
   
-  "Technical Requirements": {
-    depth0: "What are the non-negotiable technical requirements for any solution?",
-    depth1: "How does [specific requirement mentioned] relate to [compliance/security concern]?",
-    depth2: "What happens if [specific technical requirement] can't be met?",
-    depth3: "Which requirement would you sacrifice first if you had to choose?",
-    depth4: "What technical debt are you willing to accept in the short term?",
-  },
-  
-  "Integration & Infrastructure": {
-    depth0: "What systems must any new solution integrate with?",
-    depth1: "Describe the data flow between [system A] and [system B mentioned]?",
-    depth2: "What integration has failed in the past and why?",
-    depth3: "If [specific integration] breaks, what's the business impact?",
-    depth4: "What's your disaster recovery plan for [critical integration]?",
-  },
-  
-  "Success Metrics & Outcomes": {
+  "Success Metrics": {
     depth0: "How will you measure success in the first 90 days?",
-    depth1: "What specific number/metric would indicate [outcome mentioned]?",
+    depth1: "What specific number or metric would indicate [outcome mentioned]?",
     depth2: "How do you track [specific metric] today, and what's the baseline?",
-    depth3: "What would make this project a failure despite hitting metrics?",
-    depth4: "How would [specific stakeholder] define wild success?",
+    depth3: "What would make this project a failure despite hitting target metrics?",
+    depth4: "How would [specific stakeholder] define wild success versus just meeting goals?",
+  },
+  
+  "Stakeholders & Politics": {
+    depth0: "Who else would be impacted by changes to [business area from context]?",
+    depth1: "Which [specific stakeholder mentioned] would be most resistant to change and why?",
+    depth2: "What groups or departments have competing interests in this area?",
+    depth3: "Who has been burned by similar initiatives in the past?",
+    depth4: "What unspoken dynamics could influence whether this succeeds or fails?",
   }
 };
 

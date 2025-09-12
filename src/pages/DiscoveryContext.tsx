@@ -6,21 +6,45 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/supabase-auth';
 import { MockStorageService } from '@/lib/mockStorage';
 import { SolutionScope, NextStepGoal, DiscoverySession, ICP_CONFIGS } from '@/types/discovery';
+import AppHeader from '@/components/AppHeader';
 
 const DiscoveryContext = () => {
   const navigate = useNavigate();
   const { sessionId } = useParams<{ sessionId: string }>();
   const [session, setSession] = useState<DiscoverySession | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
-    businessArea: '',
     discoveryContext: '',
     solutionScope: '' as SolutionScope | '',
     nextStepGoal: '' as NextStepGoal | ''
   });
+
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  const loadUser = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        navigate('/auth');
+        return;
+      }
+      setUser(currentUser);
+    } catch (error) {
+      console.error('Error loading user:', error);
+      navigate('/auth');
+    }
+  };
+
+  const handleAbandonSession = async () => {
+    // During pre-knowledge phase, don't save anything - just go back
+    navigate('/dashboard');
+  };
 
   useEffect(() => {
     if (sessionId) {
@@ -46,7 +70,6 @@ const DiscoveryContext = () => {
       
       // Pre-fill form if data exists
       setFormData({
-        businessArea: sessionData.business_area || '',
         discoveryContext: sessionData.discovery_context || '',
         solutionScope: sessionData.solution_scope || '',
         nextStepGoal: sessionData.next_step_goal || ''
@@ -72,7 +95,6 @@ const DiscoveryContext = () => {
     try {
       // Update the session with context information
       const updatedSession = await MockStorageService.updateSession(sessionId, {
-        business_area: formData.businessArea,
         discovery_context: formData.discoveryContext,
         solution_scope: formData.solutionScope as SolutionScope,
         next_step_goal: formData.nextStepGoal as NextStepGoal
@@ -111,8 +133,7 @@ const DiscoveryContext = () => {
   };
 
   const isFormValid = () => {
-    return formData.businessArea.trim() && 
-           formData.discoveryContext.trim() && 
+    return formData.discoveryContext.trim() && 
            formData.solutionScope && 
            formData.nextStepGoal;
   };
@@ -146,19 +167,10 @@ const DiscoveryContext = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="border-b border-glass-border bg-glass-bg/50 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold sep-text">Discovery Wizard</h1>
-            {session && (
-              <div className="text-sm text-text-secondary">
-                {session.account_name} • {session.contact_name} • {selectedICP?.label}
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <AppHeader 
+        title={session ? `${session.account_name} - ${session.contact_name}` : "Discovery Context"}
+        user={user}
+      />
 
       {/* Progress Bar */}
       <div className="max-w-6xl mx-auto px-6 py-4">
@@ -206,27 +218,10 @@ const DiscoveryContext = () => {
 
         <Card className="glass-card p-8">
           <div className="space-y-8">
-            {/* Business Area */}
-            <div className="space-y-3">
-              <Label htmlFor="businessArea" className="text-text-primary font-medium text-lg">
-                Business Area <span className="text-error">*</span>
-              </Label>
-              <p className="text-text-secondary text-sm mb-3">
-                Describe {session?.contact_name}'s primary business area or department
-              </p>
-              <Input
-                id="businessArea"
-                value={formData.businessArea}
-                onChange={(e) => handleInputChange('businessArea', e.target.value)}
-                placeholder="e.g., Manufacturing Operations, Patient Care Systems, Supply Chain Management"
-                className="input-field"
-              />
-            </div>
-
-            {/* Discovery Context */}
+            {/* Client Discovery Context */}
             <div className="space-y-3">
               <Label htmlFor="discoveryContext" className="text-text-primary font-medium text-lg">
-                Discovery Context <span className="text-error">*</span>
+                Client Discovery Context <span className="text-error">*</span>
               </Label>
               <p className="text-text-secondary text-sm mb-3">
                 What context can you provide for this call with {session?.contact_name}?

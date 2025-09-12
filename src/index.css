@@ -303,3 +303,70 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Pixelated Flame Animation */
+.flame-pixel {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: linear-gradient(45deg, #ff1493, #9932cc);
+  animation: flicker 1.5s infinite alternate;
+}
+
+.flame-1 {
+  top: 10px;
+  left: 20px;
+  animation-delay: 0s;
+}
+
+.flame-2 {
+  top: 15px;
+  left: 30px;
+  animation-delay: 0.3s;
+}
+
+.flame-3 {
+  top: 5px;
+  right: 25px;
+  animation-delay: 0.6s;
+}
+
+.flame-4 {
+  bottom: 20px;
+  left: 40px;
+  animation-delay: 0.9s;
+}
+
+.flame-5 {
+  bottom: 15px;
+  right: 35px;
+  animation-delay: 1.2s;
+}
+
+@keyframes flicker {
+  0% {
+    opacity: 0.3;
+    transform: scale(1) translateY(0px);
+    background: linear-gradient(45deg, #ff1493, #9932cc);
+  }
+  25% {
+    opacity: 0.7;
+    transform: scale(1.2) translateY(-2px);
+    background: linear-gradient(45deg, #ff69b4, #ba55d3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) translateY(-4px);
+    background: linear-gradient(45deg, #ff1493, #8b008b);
+  }
+  75% {
+    opacity: 0.8;
+    transform: scale(1.3) translateY(-2px);
+    background: linear-gradient(45deg, #ff69b4, #9932cc);
+  }
+  100% {
+    opacity: 0.4;
+    transform: scale(1) translateY(0px);
+    background: linear-gradient(45deg, #ff1493, #8b008b);
+  }
+}

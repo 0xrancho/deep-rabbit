@@ -4,14 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { supabase } from '@/lib/supabase';
-import { MockAuthService } from '@/lib/mockAuth';
-import { MockStorageService, mockSupabaseDB } from '@/lib/mockStorage';
-import { User } from '@/types/discovery';
+import { getCurrentUser } from '@/lib/supabase-auth';
+import { MockStorageService } from '@/lib/mockStorage';
+import AppHeader from '@/components/AppHeader';
 
 const DiscoverySetup = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     accountName: '',
@@ -25,19 +24,15 @@ const DiscoverySetup = () => {
 
   const loadUser = async () => {
     try {
-      // Use mock auth service for development
-      const userData = MockAuthService.getCurrentUser();
-      
-      if (!userData) {
-        // For development, auto-create a session with first user
-        const defaultUser = MockAuthService.getAllUsers()[0];
-        MockAuthService.setCurrentUser(defaultUser);
-        setUser(defaultUser);
-      } else {
-        setUser(userData);
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        navigate('/auth');
+        return;
       }
+      setUser(currentUser);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error loading user:', error);
+      navigate('/auth');
     } finally {
       setIsLoading(false);
     }
@@ -89,59 +84,22 @@ const DiscoverySetup = () => {
     );
   }
 
-  const switchUser = (userId: string) => {
-    const newUser = MockAuthService.switchUser(userId);
-    if (newUser) {
-      setUser(newUser);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Developer Toolbar */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-sep-accent text-white px-6 py-2 text-sm">
-          <div className="flex items-center space-x-4">
-            <span>Dev Mode - Switch User:</span>
-            {MockAuthService.getAllUsers().map(u => (
-              <button 
-                key={u.id} 
-                onClick={() => switchUser(u.id)}
-                className={`px-2 py-1 rounded ${user?.id === u.id ? 'bg-white text-sep-accent' : 'hover:bg-white/20'}`}
-              >
-                {u.name} ({u.role})
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {/* Header */}
-      <header className="border-b border-glass-border bg-glass-bg/50 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold sep-text">Discovery Wizard</h1>
-            {user && (
-              <div className="flex items-center space-x-4 text-sm text-text-secondary">
-                <span>{user.name}</span>
-                <span>•</span>
-                <span>{user.role}</span>
-                <span>•</span>
-                <span>{user.organization?.name}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <AppHeader 
+        title="Launch New Discovery"
+        user={user}
+      />
 
       {/* Main Content */}
       <div className="max-w-2xl mx-auto px-6 py-12">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-text-primary mb-4">
-            Start New Discovery Session
+            Launch New Discovery
           </h2>
           <p className="text-text-secondary text-lg">
-            Set up your client discovery session to begin intelligent prospect qualification
+            Set up your new client discovery session for deep elicitation intelligence and reporting
           </p>
         </div>
 
@@ -150,7 +108,7 @@ const DiscoverySetup = () => {
             {/* Account Name */}
             <div className="space-y-2">
               <Label htmlFor="accountName" className="text-text-primary font-medium">
-                Account <span className="text-error">*</span>
+                Account Name <span className="text-error">*</span>
               </Label>
               <Input
                 id="accountName"
@@ -161,16 +119,16 @@ const DiscoverySetup = () => {
               />
             </div>
 
-            {/* Contact Name */}
+            {/* Client Name */}
             <div className="space-y-2">
               <Label htmlFor="contactName" className="text-text-primary font-medium">
-                Contact Name <span className="text-error">*</span>
+                Client Name <span className="text-error">*</span>
               </Label>
               <Input
                 id="contactName"
                 value={formData.contactName}
                 onChange={(e) => handleInputChange('contactName', e.target.value)}
-                placeholder="e.g., John Smith"
+                placeholder="e.g., Jane Doe"
                 className="input-field"
               />
             </div>
@@ -187,30 +145,6 @@ const DiscoverySetup = () => {
                 placeholder="e.g., CTO, VP Engineering"
                 className="input-field"
               />
-            </div>
-
-            {/* Consultant Info - Read Only */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-text-primary font-medium">
-                  Consultant
-                </Label>
-                <Input
-                  value={user?.name || ''}
-                  readOnly
-                  className="input-field bg-glass-bg/50 cursor-not-allowed"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-text-primary font-medium">
-                  Consultant Role
-                </Label>
-                <Input
-                  value={user?.role || ''}
-                  readOnly
-                  className="input-field bg-glass-bg/50 cursor-not-allowed"
-                />
-              </div>
             </div>
 
             {/* Next Button */}

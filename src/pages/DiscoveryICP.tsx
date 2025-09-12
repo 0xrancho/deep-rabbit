@@ -5,47 +5,97 @@ import { Card } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 import { MockStorageService } from '@/lib/mockStorage';
 import { ClientICP, ICP_CONFIGS, DiscoverySession } from '@/types/discovery';
+import { getUserCustomICPs } from '@/lib/business-intelligence';
+import { getCurrentUser } from '@/lib/supabase-auth';
+import AppHeader from '@/components/AppHeader';
+import { Target, Users, Building, Zap } from 'lucide-react';
+
+// Helper function to get appropriate icon for custom ICPs
+const getICPIcon = (name: string) => {
+  const nameLower = name.toLowerCase();
+  if (nameLower.includes('enterprise') || nameLower.includes('corporate')) return <Building className="w-12 h-12 text-sep-primary" />;
+  if (nameLower.includes('technology') || nameLower.includes('tech') || nameLower.includes('software')) return <Zap className="w-12 h-12 text-sep-primary" />;
+  if (nameLower.includes('healthcare') || nameLower.includes('medical') || nameLower.includes('health')) return <Target className="w-12 h-12 text-sep-primary" />;
+  if (nameLower.includes('consulting') || nameLower.includes('service')) return <Users className="w-12 h-12 text-sep-primary" />;
+  return <Target className="w-12 h-12 text-sep-primary" />;
+};
 
 const DiscoveryICP = () => {
   const navigate = useNavigate();
   const { sessionId } = useParams<{ sessionId: string }>();
-  const [selectedICP, setSelectedICP] = useState<ClientICP | null>(null);
+  const [selectedICP, setSelectedICP] = useState<any>(null);
   const [session, setSession] = useState<DiscoverySession | null>(null);
+  const [customICPs, setCustomICPs] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    loadUser();
+  }, []);
+
+  useEffect(() => {
     if (sessionId) {
-      loadSession();
+      loadSessionAndICPs();
     }
   }, [sessionId]);
 
-  const loadSession = async () => {
+  const loadUser = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        navigate('/auth');
+        return;
+      }
+      setUser(currentUser);
+    } catch (error) {
+      console.error('Error loading user:', error);
+      navigate('/auth');
+    }
+  };
+
+  const loadSessionAndICPs = async () => {
     try {
       if (!sessionId) {
         navigate('/discovery/setup');
         return;
       }
 
+      // Load session
       const sessionData = await MockStorageService.getSession(sessionId);
-
       if (!sessionData) {
         navigate('/discovery/setup');
         return;
       }
-
       setSession(sessionData);
-      if (sessionData.client_icp) {
-        setSelectedICP(sessionData.client_icp as ClientICP);
+
+      // Load custom ICPs
+      const icps = await getUserCustomICPs();
+      if (icps.length > 0) {
+        setCustomICPs(icps);
+        
+        // If session has a custom ICP selected, find and set it
+        if (sessionData.custom_icp_id) {
+          const selectedCustomICP = icps.find(icp => icp.id === sessionData.custom_icp_id);
+          if (selectedCustomICP) {
+            setSelectedICP(selectedCustomICP);
+          }
+        }
+      } else {
+        // Fallback to hardcoded ICPs if no custom ICPs
+        setCustomICPs([]);
+        if (sessionData.client_icp) {
+          setSelectedICP(sessionData.client_icp as ClientICP);
+        }
       }
     } catch (error) {
-      console.error('Error loading session:', error);
+      console.error('Error loading session and ICPs:', error);
       navigate('/discovery/setup');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleICPSelect = (icp: ClientICP) => {
+  const handleICPSelect = (icp: any) => {
     setSelectedICP(icp);
   };
 
@@ -54,9 +104,11 @@ const DiscoveryICP = () => {
 
     try {
       // Update the session with selected ICP
-      const updatedSession = await MockStorageService.updateSession(sessionId, { 
-        client_icp: selectedICP 
-      });
+      const updateData = customICPs.length > 0 
+        ? { custom_icp_id: selectedICP.id, business_context: { selected_icp: selectedICP } }
+        : { client_icp: selectedICP };
+
+      const updatedSession = await MockStorageService.updateSession(sessionId, updateData);
 
       if (!updatedSession) {
         console.error('Error updating session');
@@ -89,19 +141,10 @@ const DiscoveryICP = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="border-b border-glass-border bg-glass-bg/50 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold sep-text">Discovery Wizard</h1>
-            {session && (
-              <div className="text-sm text-text-secondary">
-                {session.account_name} • {session.contact_name}
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <AppHeader 
+        title={session ? `${session.account_name} - ${session.contact_name}` : "Client Profile"}
+        user={user}
+      />
 
       {/* Progress Bar */}
       <div className="max-w-6xl mx-auto px-6 py-4">
@@ -140,86 +183,195 @@ const DiscoveryICP = () => {
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-text-primary mb-4">
-            Select Client Industry
+            {customICPs.length > 0 ? 'Select Discovery Profile' : 'Select Client Industry'}
           </h2>
           <p className="text-text-secondary text-lg">
-            Choose {session?.contact_name}'s primary industry to customize the discovery experience
+            {customICPs.length > 0 
+              ? `Choose the best discovery profile for ${session?.contact_name}'s business`
+              : `Choose ${session?.contact_name}'s primary industry to customize the discovery experience`
+            }
           </p>
         </div>
 
-        {/* ICP Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {Object.entries(ICP_CONFIGS).map(([key, config]) => {
-            const icp = key as ClientICP;
-            const isSelected = selectedICP === icp;
-            
-            return (
-              <Card
-                key={icp}
-                className={`glass-card p-6 cursor-pointer transition-all duration-300 hover:scale-105 ${
-                  isSelected 
-                    ? 'border-2 border-sep-primary sep-glow' 
-                    : 'border border-glass-border hover:border-sep-secondary/50'
-                }`}
-                onClick={() => handleICPSelect(icp)}
-              >
-                <div className="text-center">
-                  {/* Icon */}
-                  <div className="text-4xl mb-4">{config.icon}</div>
-                  
-                  {/* Title */}
-                  <h3 className={`text-lg font-bold mb-3 ${
-                    isSelected ? 'sep-text' : 'text-text-primary'
-                  }`}>
-                    {config.label}
-                  </h3>
-                  
-                  {/* Description */}
-                  <p className="text-text-secondary text-sm leading-relaxed">
-                    {config.description}
-                  </p>
-                  
-                  {/* Keywords */}
-                  <div className="mt-4 flex flex-wrap gap-1 justify-center">
-                    {config.keywords.slice(0, 3).map((keyword) => (
-                      <span 
-                        key={keyword}
-                        className="px-2 py-1 text-xs bg-glass-bg border border-glass-border rounded text-text-muted"
-                      >
-                        {keyword}
-                      </span>
-                    ))}
+        {/* Custom ICPs Grid */}
+        {customICPs.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {customICPs.map((icp) => {
+              const isSelected = selectedICP && selectedICP.id === icp.id;
+              const icon = getICPIcon(icp.name);
+              
+              return (
+                <Card
+                  key={icp.id}
+                  className={`glass-card p-6 cursor-pointer transition-all duration-300 hover:scale-105 ${
+                    isSelected 
+                      ? 'border-2 border-sep-primary sep-glow' 
+                      : 'border border-glass-border hover:border-sep-secondary/50'
+                  }`}
+                  onClick={() => handleICPSelect(icp)}
+                >
+                  <div className="text-center">
+                    {/* Icon */}
+                    <div className="text-4xl mb-4">{icon}</div>
+                    
+                    {/* Title */}
+                    <h3 className={`text-lg font-bold mb-3 ${
+                      isSelected ? 'sep-text' : 'text-text-primary'
+                    }`}>
+                      {icp.name}
+                    </h3>
+                    
+                    {/* Description */}
+                    <p className="text-text-secondary text-sm leading-relaxed mb-4">
+                      {icp.description}
+                    </p>
+                    
+                    {/* Industries */}
+                    <div className="flex flex-wrap gap-1 justify-center">
+                      {icp.target_industries.slice(0, 3).map((industry: string) => (
+                        <span 
+                          key={industry}
+                          className="px-2 py-1 text-xs bg-glass-bg border border-glass-border rounded text-text-muted"
+                        >
+                          {industry}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          // Fallback to hardcoded ICPs
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {Object.entries(ICP_CONFIGS).map(([key, config]) => {
+              const icp = key as ClientICP;
+              const isSelected = selectedICP === icp;
+              
+              return (
+                <Card
+                  key={icp}
+                  className={`glass-card p-6 cursor-pointer transition-all duration-300 hover:scale-105 ${
+                    isSelected 
+                      ? 'border-2 border-sep-primary sep-glow' 
+                      : 'border border-glass-border hover:border-sep-secondary/50'
+                  }`}
+                  onClick={() => handleICPSelect(icp)}
+                >
+                  <div className="text-center">
+                    {/* Icon */}
+                    <div className="text-4xl mb-4">{config.icon}</div>
+                    
+                    {/* Title */}
+                    <h3 className={`text-lg font-bold mb-3 ${
+                      isSelected ? 'sep-text' : 'text-text-primary'
+                    }`}>
+                      {config.label}
+                    </h3>
+                    
+                    {/* Description */}
+                    <p className="text-text-secondary text-sm leading-relaxed">
+                      {config.description}
+                    </p>
+                    
+                    {/* Keywords */}
+                    <div className="mt-4 flex flex-wrap gap-1 justify-center">
+                      {config.keywords.slice(0, 3).map((keyword) => (
+                        <span 
+                          key={keyword}
+                          className="px-2 py-1 text-xs bg-glass-bg border border-glass-border rounded text-text-muted"
+                        >
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
         {/* Selected ICP Details */}
         {selectedICP && (
           <Card className="glass-card p-6 mb-8">
             <div className="text-center mb-4">
               <h3 className="text-xl font-bold sep-text mb-2">
-                {ICP_CONFIGS[selectedICP].label} Discovery Focus
+                {customICPs.length > 0 ? selectedICP.name : ICP_CONFIGS[selectedICP].label} Discovery Focus
               </h3>
               <p className="text-text-secondary">
-                Example questions GABI will ask based on this industry selection
+                Example questions DeepRabbit will ask based on this profile selection
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {Object.entries(ICP_CONFIGS[selectedICP].questions).map(([category, question]) => (
-                <div key={category} className="bg-glass-bg/50 p-4 rounded-lg">
-                  <div className="text-xs text-sep-secondary uppercase font-medium mb-2 tracking-wide">
-                    {category.replace(/([A-Z])/g, ' $1').trim()}
+            {customICPs.length > 0 && selectedICP.sample_questions ? (
+              // Custom ICP questions
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {selectedICP.sample_questions.slice(0, 6).map((question: string, index: number) => (
+                  <div key={index} className="bg-glass-bg/50 p-4 rounded-lg">
+                    <div className="text-xs text-sep-secondary uppercase font-medium mb-2 tracking-wide">
+                      Discovery Question {index + 1}
+                    </div>
+                    <p className="text-text-primary text-sm leading-relaxed">
+                      "{question}"
+                    </p>
                   </div>
-                  <p className="text-text-primary text-sm leading-relaxed">
-                    "{question}"
-                  </p>
+                ))}
+              </div>
+            ) : (
+              // Fallback to hardcoded questions
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {Object.entries(ICP_CONFIGS[selectedICP].questions).map(([category, question]) => (
+                  <div key={category} className="bg-glass-bg/50 p-4 rounded-lg">
+                    <div className="text-xs text-sep-secondary uppercase font-medium mb-2 tracking-wide">
+                      {category.replace(/([A-Z])/g, ' $1').trim()}
+                    </div>
+                    <p className="text-text-primary text-sm leading-relaxed">
+                      "{question}"
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Additional ICP Details for Custom ICPs */}
+            {customICPs.length > 0 && selectedICP.target_roles && (
+              <div className="mt-6 pt-6 border-t border-glass-border">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <h4 className="text-sm font-semibold text-text-primary mb-2">Target Roles</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedICP.target_roles.slice(0, 3).map((role: string, index: number) => (
+                        <span key={index} className="px-2 py-1 text-xs bg-sep-primary/10 text-sep-primary rounded">
+                          {role}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-text-primary mb-2">Company Size</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedICP.target_company_size.map((size: string, index: number) => (
+                        <span key={index} className="px-2 py-1 text-xs bg-glass-highlight text-text-secondary rounded">
+                          {size}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-text-primary mb-2">Focus Areas</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedICP.discovery_focus_areas.slice(0, 3).map((area: string, index: number) => (
+                        <span key={index} className="px-2 py-1 text-xs bg-user-accent/10 text-user-accent rounded">
+                          {area}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </Card>
         )}
 
