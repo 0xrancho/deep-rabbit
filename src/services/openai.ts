@@ -751,8 +751,12 @@ export const generateCompletion = async (
   prompt: string,
   options?: { temperature?: number; maxTokens?: number }
 ): Promise<string> => {
-  if (!OPENAI_API_KEY) {
+  if (!apiKey) {
     throw new Error('OpenAI API key not configured');
+  }
+
+  if (!openai) {
+    throw new Error('OpenAI client not initialized');
   }
 
   const completion = await openai.chat.completions.create({
