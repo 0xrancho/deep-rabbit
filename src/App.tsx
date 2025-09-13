@@ -21,14 +21,14 @@ const App = () => (
           }}
         >
           <Routes>
-            {/* Redirect root to demo */}
-            <Route path="/" element={<Navigate to="/demo" />} />
+            {/* Main landing page at root */}
+            <Route path="/" element={<LandingDemo />} />
             
-            {/* Only demo route available in production */}
-            <Route path="/demo" element={<LandingDemo />} />
+            {/* Handle legacy /demo route by redirecting to root */}
+            <Route path="/demo" element={<Navigate to="/" />} />
             
-            {/* All other routes redirect to demo */}
-            <Route path="*" element={<Navigate to="/demo" />} />
+            {/* All other routes show 404 */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </div>
