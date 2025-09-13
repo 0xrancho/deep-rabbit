@@ -1,0 +1,21 @@
+{
+  "name": "DeepRabbit",
+  "short_name": "DeepRabbit",
+  "description": "AI-powered elicitation intelligence for B2B Professional Services",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#8B5CF6",
+  "icons": [
+    {
+      "src": "/bunny-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/bunny-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
