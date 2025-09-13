@@ -241,7 +241,7 @@ const LandingDemo = () => {
                 className="w-8 h-8 md:w-10 md:h-10 object-contain"
               />
               <h1 className="text-xl md:text-2xl font-bold text-white">DeepRabbit</h1>
-              <span className="text-xs md:text-sm px-2 py-1 rounded-full font-semibold" style={{ backgroundColor: '#c084fc', color: 'white' }}>
+              <span className="text-xs md:text-sm px-2 py-1 rounded-full font-semibold" style={{ backgroundColor: '#8B5CF6', color: 'white' }}>
                 COMING SOON
               </span>
             </div>
@@ -381,7 +381,8 @@ const LandingDemo = () => {
                 <Button
                   onClick={handleAnalyze}
                   disabled={!formData.service.trim() || !formData.clientUrl.trim()}
-                  className="px-6 md:px-8 py-3 md:py-4 text-xl md:text-2xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                  className="px-6 md:px-8 py-3 md:py-4 text-xl md:text-2xl hover:opacity-80"
+                  style={{ backgroundColor: '#8B5CF6' }}
                 >
                   ⟶
                 </Button>
@@ -700,39 +701,39 @@ const LandingDemo = () => {
         </Card>
 
         {/* How It Works Section */}
-        <div className="how-it-works-section mt-16 mb-12 max-w-4xl mx-auto">
-          <h3 className="text-2xl font-bold text-white text-center mb-12">
+        <div className="how-it-works-section mt-16 mb-12 max-w-5xl mx-auto">
+          <h3 className="text-3xl font-bold text-white text-center mb-14">
             What happens under the hood
           </h3>
           
           {/* Simple 3-panel illustration */}
-          <div className="process-panels grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-            <div className="panel text-center p-6 bg-glass-bg/30 border border-glass-border/30 rounded-xl backdrop-blur-sm">
-              <div className="icon mb-4">
-                <img src={orchestrationIcon} alt="Intelligent Orchestration" className="w-24 h-24 mx-auto" />
+          <div className="process-panels grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+            <div className="panel text-center p-7 bg-glass-bg/30 border border-glass-border/30 rounded-xl backdrop-blur-sm">
+              <div className="icon mb-5">
+                <img src={orchestrationIcon} alt="Intelligent Orchestration" className="w-29 h-29 mx-auto" />
               </div>
-              <h4 className="text-lg font-semibold text-white mb-3">Intelligent Orchestration</h4>
-              <p className="text-text-secondary text-sm leading-relaxed">
+              <h4 className="text-xl font-semibold text-white mb-4">Intelligent Orchestration</h4>
+              <p className="text-text-secondary text-base leading-relaxed">
                 8 elicitation areas with context-aware progression tracking
               </p>
             </div>
             
-            <div className="panel text-center p-6 bg-glass-bg/30 border border-glass-border/30 rounded-xl backdrop-blur-sm">
-              <div className="icon mb-4">
-                <img src={enrichmentIcon} alt="Real-time Enrichment" className="w-24 h-24 mx-auto" />
+            <div className="panel text-center p-7 bg-glass-bg/30 border border-glass-border/30 rounded-xl backdrop-blur-sm">
+              <div className="icon mb-5">
+                <img src={enrichmentIcon} alt="Real-time Enrichment" className="w-29 h-29 mx-auto" />
               </div>
-              <h4 className="text-lg font-semibold text-white mb-3">Real-time Enrichment</h4>
-              <p className="text-text-secondary text-sm leading-relaxed">
+              <h4 className="text-xl font-semibold text-white mb-4">Real-time Enrichment</h4>
+              <p className="text-text-secondary text-base leading-relaxed">
                 Search, scrape, and validate answers as they emerge
               </p>
             </div>
             
-            <div className="panel text-center p-6 bg-glass-bg/30 border border-glass-border/30 rounded-xl backdrop-blur-sm">
-              <div className="icon mb-4">
-                <img src={extractionIcon} alt="Structured Extraction" className="w-24 h-24 mx-auto" />
+            <div className="panel text-center p-7 bg-glass-bg/30 border border-glass-border/30 rounded-xl backdrop-blur-sm">
+              <div className="icon mb-5">
+                <img src={extractionIcon} alt="Structured Extraction" className="w-29 h-29 mx-auto" />
               </div>
-              <h4 className="text-lg font-semibold text-white mb-3">Structured Extraction</h4>
-              <p className="text-text-secondary text-sm leading-relaxed">
+              <h4 className="text-xl font-semibold text-white mb-4">Structured Extraction</h4>
+              <p className="text-text-secondary text-base leading-relaxed">
                 Export to CRM via API • Full audit trail • Summary reports
               </p>
             </div>
