@@ -350,27 +350,37 @@ const LandingDemo = () => {
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="text-gray-400 text-sm mb-1 block">Your Company Website</label>
-                  <Input
-                    value={formData.yourCompanyUrl}
-                    onChange={(e) => handleInputChange('yourCompanyUrl', e.target.value)}
-                    placeholder="accenture.com"
-                    className="text-sm md:text-lg p-3 md:p-4 border-2 text-white bg-black border-gray-600 placeholder-gray-400"
-                    style={{ fontFamily: 'Consolas, Monaco, monospace' }}
-                    onKeyPress={(e) => e.key === 'Enter' && document.getElementById('prospectUrl')?.focus()}
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm md:text-lg" style={{ fontFamily: 'Consolas, Monaco, monospace' }}>
+                      https://
+                    </span>
+                    <Input
+                      value={formData.yourCompanyUrl}
+                      onChange={(e) => handleInputChange('yourCompanyUrl', e.target.value)}
+                      placeholder="accenture.com"
+                      className="text-sm md:text-lg p-3 md:p-4 pl-20 md:pl-24 border-2 text-white bg-black border-gray-600 placeholder-gray-400"
+                      style={{ fontFamily: 'Consolas, Monaco, monospace' }}
+                      onKeyPress={(e) => e.key === 'Enter' && document.getElementById('prospectUrl')?.focus()}
+                    />
+                  </div>
                 </div>
                 
                 <div>
                   <label className="text-gray-400 text-sm mb-1 block">Prospect's Website</label>
-                  <Input
-                    id="prospectUrl"
-                    value={formData.prospectUrl}
-                    onChange={(e) => handleInputChange('prospectUrl', e.target.value)}
-                    placeholder="nike.com"
-                    className="text-sm md:text-lg p-3 md:p-4 border-2 text-white bg-black border-gray-600 placeholder-gray-400"
-                    style={{ fontFamily: 'Consolas, Monaco, monospace' }}
-                    onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm md:text-lg" style={{ fontFamily: 'Consolas, Monaco, monospace' }}>
+                      https://
+                    </span>
+                    <Input
+                      id="prospectUrl"
+                      value={formData.prospectUrl}
+                      onChange={(e) => handleInputChange('prospectUrl', e.target.value)}
+                      placeholder="nike.com"
+                      className="text-sm md:text-lg p-3 md:p-4 pl-20 md:pl-24 border-2 text-white bg-black border-gray-600 placeholder-gray-400"
+                      style={{ fontFamily: 'Consolas, Monaco, monospace' }}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
+                    />
+                  </div>
                 </div>
               </div>
               
