@@ -752,11 +752,15 @@ export const generateCompletion = async (
   options?: { temperature?: number; maxTokens?: number }
 ): Promise<string> => {
   if (!apiKey) {
-    throw new Error('OpenAI API key not configured');
+    throw new Error('OpenAI API key not configured - please set VITE_OPENAI_API_KEY in your environment');
   }
 
   if (!openai) {
-    throw new Error('OpenAI client not initialized');
+    // Check if we're in browser mode without permission
+    if (isBrowser && !allowBrowserMode) {
+      throw new Error('OpenAI client disabled in browser for security. Set VITE_ALLOW_BROWSER_AI=true to enable.');
+    }
+    throw new Error('OpenAI client not initialized - check API key and browser settings');
   }
 
   const completion = await openai.chat.completions.create({

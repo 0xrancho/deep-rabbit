@@ -88,17 +88,7 @@ export async function extractYourCompany(url: string): Promise<CompanyInfo> {
     return JSON.parse(response);
   } catch (error) {
     console.error('Error extracting company info:', error);
-    
-    // Fallback extraction from URL
-    const domain = url.replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/^www\./, '');
-    const companyName = domain.split('.')[0];
-    
-    return {
-      name: companyName.charAt(0).toUpperCase() + companyName.slice(1),
-      subIndustry: 'professional services',
-      services: ['consulting', 'advisory services'],
-      typicalClients: ['enterprise clients', 'mid-market companies']
-    };
+    throw new Error(`Failed to analyze company website: ${url}`);
   }
 }
 
@@ -132,17 +122,7 @@ export async function extractProspect(url: string): Promise<ProspectInfo> {
     return JSON.parse(response);
   } catch (error) {
     console.error('Error extracting prospect info:', error);
-    
-    // Fallback extraction from URL
-    const domain = url.replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/^www\./, '');
-    const orgName = domain.split('.')[0];
-    
-    return {
-      name: orgName.charAt(0).toUpperCase() + orgName.slice(1),
-      orgType: 'company',
-      industry: 'business services',
-      currentNeeds: ['operational efficiency', 'digital transformation']
-    };
+    throw new Error(`Failed to analyze prospect website: ${url}`);
   }
 }
 
