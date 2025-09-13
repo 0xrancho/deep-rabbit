@@ -746,11 +746,40 @@ const generateMockDiscoveryQuestion = (request: DiscoveryQuestionRequest): Disco
   };
 };
 
+// Simple completion generation for other services
+export const generateCompletion = async (
+  prompt: string,
+  options?: { temperature?: number; maxTokens?: number }
+): Promise<string> => {
+  if (!OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured');
+  }
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      {
+        role: 'user',
+        content: prompt
+      }
+    ],
+    temperature: options?.temperature ?? 0.7,
+    max_tokens: options?.maxTokens ?? 500
+  });
+
+  return completion.choices[0]?.message?.content || '';
+};
+
+export const openaiService = {
+  generateCompletion
+};
+
 export default {
   evaluateConfidence,
   generateReport,
   validateProcessDescription,
   batchAnalyze,
   generateDiscoveryQuestion,
-  isOpenAIAvailable
+  isOpenAIAvailable,
+  generateCompletion
 };

@@ -7,13 +7,15 @@ import orchestrationIcon from '@/assets/orchestration.png';
 import enrichmentIcon from '@/assets/enrichment.png';
 import extractionIcon from '@/assets/extraction.png';
 import { conversationGenerator } from '@/services/conversationGenerator';
+import { analyzeBusinessContext } from '@/services/websiteAnalyzer';
+import { enhancedConversationGenerator } from '@/services/enhancedConversationGenerator';
 import { saveWaitlistEntry, WaitlistRecord } from '@/lib/supabase';
 
 const LandingDemo = () => {
   const [currentStage, setCurrentStage] = useState<'input' | 'loading' | 'results' | 'interactive'>('input');
   const [formData, setFormData] = useState({
-    service: '',
-    clientUrl: ''
+    yourCompanyUrl: '',
+    prospectUrl: ''
   });
   const [loadingMessage, setLoadingMessage] = useState('Analyzing client needs...');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,6 +30,7 @@ const LandingDemo = () => {
   const [conversation, setConversation] = useState<any[]>([]);
   const [isGeneratingFollowUp, setIsGeneratingFollowUp] = useState(false);
   const [showAnimation, setShowAnimation] = useState(false);
+  const [businessContext, setBusinessContext] = useState<any>(null);
   const [results, setResults] = useState({
     service: '',
     clientName: '',
@@ -43,19 +46,24 @@ const LandingDemo = () => {
   });
 
   const loadingMessages = [
-    'Analyzing client needs...',
-    'Understanding their industry...',
-    'Identifying pain points...',
-    'Generating personalized questions...'
+    'Analyzing your company website...',
+    'Extracting prospect information...',
+    'Generating business case...',
+    'Creating conversation context...'
   ];
 
   const handleAnalyze = async () => {
-    if (!formData.service.trim() || !formData.clientUrl.trim()) return;
+    if (!formData.yourCompanyUrl.trim() || !formData.prospectUrl.trim()) return;
 
     // Automatically add https:// if not present
-    let processedUrl = formData.clientUrl.trim();
-    if (!processedUrl.match(/^https?:\/\//)) {
-      processedUrl = `https://${processedUrl}`;
+    let processedYourCompanyUrl = formData.yourCompanyUrl.trim();
+    if (!processedYourCompanyUrl.match(/^https?:\/\//)) {
+      processedYourCompanyUrl = `https://${processedYourCompanyUrl}`;
+    }
+
+    let processedProspectUrl = formData.prospectUrl.trim();
+    if (!processedProspectUrl.match(/^https?:\/\//)) {
+      processedProspectUrl = `https://${processedProspectUrl}`;
     }
 
     setCurrentStage('loading');
@@ -68,27 +76,26 @@ const LandingDemo = () => {
     }, 1500);
 
     try {
-      // Generate real conversation using Firecrawl + GPT
-      const conversation = await conversationGenerator.generateConversation({
-        userBusiness: 'DeepRabbit Consulting',
-        userService: formData.service,
-        prospectWebsite: processedUrl,
-        prospectRole: 'VP of Operations'
+      // Step 1: Analyze business context from both websites
+      const businessContext = await analyzeBusinessContext(processedYourCompanyUrl, processedProspectUrl);
+      setBusinessContext(businessContext);
+      
+      // Step 2: Generate conversation based on business context
+      const conversation = await enhancedConversationGenerator.generateConversation({
+        businessContext
       });
       
       clearInterval(messageInterval);
       
-      // Parse client name from URL for display
-      const domain = processedUrl.replace(/^https?:\/\//, '').replace(/\/$/, '').replace('.com', '');
-      const clientName = conversation.metadata?.prospectCompany || 
-                        domain.charAt(0).toUpperCase() + domain.slice(1);
+      // Use extracted company names
+      const clientName = businessContext.prospect.name;
       
       // Store conversation data for results display
       setResults({
-        service: formData.service,
+        service: businessContext.businessCase,
         clientName: clientName,
-        clientType: conversation.metadata?.prospectIndustry || 'enterprise',
-        painPoint: conversation.metadata?.keyPainPoint || 'operational efficiency',
+        clientType: businessContext.prospect.industry,
+        painPoint: conversation.metadata?.keyPainPoint || 'operational challenges',
         questions: {
           currentState: conversation.deepRabbitQuestion1,
           painDiscovery: conversation.userResponse,
@@ -116,26 +123,11 @@ const LandingDemo = () => {
       console.error('Error generating conversation:', error);
       clearInterval(messageInterval);
       
-      // Fallback to mock data if API fails
-      const domain = processedUrl.replace(/^https?:\/\//, '').replace(/\/$/, '').replace('.com', '');
-      const clientName = domain.charAt(0).toUpperCase() + domain.slice(1);
+      // Show error message to user
+      alert('Unable to analyze the provided websites. Please ensure both URLs are accessible and try again.');
       
-      const mockResults = {
-        service: formData.service,
-        clientName: clientName,
-        clientType: 'enterprise retail',
-        painPoint: `managing complex ${formData.service.toLowerCase()} workflows across multiple departments without unified visibility`,
-        questions: {
-          currentState: `"How does ${clientName} currently handle ${formData.service.toLowerCase()} across your organization?"`,
-          painDiscovery: `"What happens when ${formData.service.toLowerCase()} requirements change mid-project?"`,
-          futureState: `"If ${formData.service.toLowerCase()} was perfectly streamlined, what would ${clientName} be able to achieve?"`,
-          constraints: `"What compliance or technical requirements must any ${formData.service.toLowerCase()} solution meet?"`,
-          decision: `"Who at ${clientName} would need to approve changes to ${formData.service.toLowerCase()} processes?"`
-        }
-      };
-      
-      setResults(mockResults);
-      setCurrentStage('results');
+      // Reset to input stage
+      setCurrentStage('input');
     }
   };
 
@@ -145,7 +137,7 @@ const LandingDemo = () => {
 
   const resetDemo = () => {
     setCurrentStage('input');
-    setFormData({ service: '', clientUrl: '' });
+    setFormData({ yourCompanyUrl: '', prospectUrl: '' });
     setProspectInput('');
     setConversation([]);
     setIsGeneratingFollowUp(false);
@@ -194,12 +186,11 @@ const LandingDemo = () => {
     setProspectInput('');
 
     try {
-      // Generate DeepRabbit's dynamic follow-up using GPT
-      const response = await conversationGenerator.generateFollowUp({
-        conversationHistory: newConversation,
-        userService: formData.service,
-        prospectWebsite: formData.clientUrl
-      });
+      // Generate DeepRabbit's dynamic follow-up using enhanced generator
+      const response = await enhancedConversationGenerator.generateFollowUp(
+        newConversation,
+        businessContext
+      );
 
       // Add DeepRabbit's follow-up to conversation
       console.log('DeepRabbit response received:', response.followUpQuestion);
@@ -358,19 +349,19 @@ const LandingDemo = () => {
             <div>
               <div className="space-y-4 mb-6">
                 <Input
-                  value={formData.service}
-                  onChange={(e) => handleInputChange('service', e.target.value)}
-                  placeholder="What service do you sell? (e.g., IT services and system integration)"
+                  value={formData.yourCompanyUrl}
+                  onChange={(e) => handleInputChange('yourCompanyUrl', e.target.value)}
+                  placeholder="Your company website (e.g., accenture.com)"
                   className="text-sm md:text-lg p-3 md:p-4 border-2 text-white bg-black border-gray-600 placeholder-gray-400"
                   style={{ fontFamily: 'Consolas, Monaco, monospace' }}
-                  onKeyPress={(e) => e.key === 'Enter' && document.getElementById('clientUrl')?.focus()}
+                  onKeyPress={(e) => e.key === 'Enter' && document.getElementById('prospectUrl')?.focus()}
                 />
                 
                 <Input
-                  id="clientUrl"
-                  value={formData.clientUrl}
-                  onChange={(e) => handleInputChange('clientUrl', e.target.value)}
-                  placeholder="Who might you sell to? (e.g., https://example.com)"
+                  id="prospectUrl"
+                  value={formData.prospectUrl}
+                  onChange={(e) => handleInputChange('prospectUrl', e.target.value)}
+                  placeholder="Your prospect's website (e.g., nike.com)"
                   className="text-sm md:text-lg p-3 md:p-4 border-2 text-white bg-black border-gray-600 placeholder-gray-400"
                   style={{ fontFamily: 'Consolas, Monaco, monospace' }}
                   onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
@@ -380,7 +371,7 @@ const LandingDemo = () => {
               <div className="flex justify-center">
                 <Button
                   onClick={handleAnalyze}
-                  disabled={!formData.service.trim() || !formData.clientUrl.trim()}
+                  disabled={!formData.yourCompanyUrl.trim() || !formData.prospectUrl.trim()}
                   className="px-6 md:px-8 py-3 md:py-4 text-xl md:text-2xl hover:opacity-80"
                   style={{ backgroundColor: '#8B5CF6' }}
                 >
@@ -411,6 +402,19 @@ const LandingDemo = () => {
               <div className="flex gap-6">
                 {/* Conversation Flow */}
                 <div className="flex-1">
+                  {/* Business Context Display */}
+                  {businessContext && (
+                    <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-4 text-sm">
+                      <div className="text-green-800 font-semibold mb-2">🎯 Business Context Identified:</div>
+                      <div className="text-green-700 space-y-1">
+                        <div><strong>Your Company:</strong> {businessContext.yourCompany.name} ({businessContext.yourCompany.subIndustry})</div>
+                        <div><strong>Prospect:</strong> {businessContext.prospect.name} ({businessContext.prospect.industry})</div>
+                        <div><strong>Business Case:</strong> {businessContext.businessCase}</div>
+                        <div><strong>Catalyst:</strong> {businessContext.catalyst}</div>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 text-sm">
                     <strong className="text-blue-800">Context:</strong> {conversation.preHistoryContext}
                   </div>
