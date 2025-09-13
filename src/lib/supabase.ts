@@ -86,6 +86,15 @@ export interface FeedbackRecord {
   created_at?: string;
 }
 
+export interface WaitlistRecord {
+  id?: string;
+  name: string;
+  email: string;
+  company_url: string;
+  created_at?: string;
+  user_agent?: string;
+}
+
 export interface CTAClick {
   id?: string;
   assessment_id?: string;
@@ -301,6 +310,42 @@ export const trackCTAClick = async (cta: CTAClick): Promise<void> => {
       });
       
       localStorage.setItem(key, JSON.stringify(clicks));
+    }
+  );
+};
+
+export const saveWaitlistEntry = async (waitlist: WaitlistRecord): Promise<WaitlistRecord | null> => {
+  return withSupabaseFallback(
+    async () => {
+      const { data, error } = await supabase!
+        .from('waitlist')
+        .insert({
+          ...waitlist,
+          user_agent: navigator.userAgent,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    async () => {
+      // Fallback: save to localStorage
+      const key = 'waitlist_entries';
+      const existing = localStorage.getItem(key);
+      const entries = existing ? JSON.parse(existing) : [];
+      
+      const entryWithId = {
+        ...waitlist,
+        id: `local_${Date.now()}`,
+        user_agent: navigator.userAgent,
+        created_at: new Date().toISOString()
+      };
+      
+      entries.push(entryWithId);
+      localStorage.setItem(key, JSON.stringify(entries));
+      return entryWithId;
     }
   );
 };

@@ -7,6 +7,7 @@ import orchestrationIcon from '@/assets/orchestration.png';
 import enrichmentIcon from '@/assets/enrichment.png';
 import extractionIcon from '@/assets/extraction.png';
 import { conversationGenerator } from '@/services/conversationGenerator';
+import { saveWaitlistEntry, WaitlistRecord } from '@/lib/supabase';
 
 const LandingDemo = () => {
   const [currentStage, setCurrentStage] = useState<'input' | 'loading' | 'results' | 'interactive'>('input');
@@ -151,13 +152,32 @@ const LandingDemo = () => {
     setShowAnimation(false);
   };
 
-  const handleWaitlistSubmit = (e: React.FormEvent) => {
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle waitlist submission
-    console.log('Waitlist submission:', waitlistForm);
-    setIsWaitlistOpen(false);
-    setWaitlistForm({ name: '', email: '', companyUrl: '' });
-    alert('Thanks! We\'ll be in touch soon.');
+    
+    // Automatically add https:// if not present
+    let processedUrl = waitlistForm.companyUrl.trim();
+    if (processedUrl && !processedUrl.match(/^https?:\/\//)) {
+      processedUrl = `https://${processedUrl}`;
+    }
+    
+    try {
+      const waitlistEntry: WaitlistRecord = {
+        name: waitlistForm.name.trim(),
+        email: waitlistForm.email.trim(),
+        company_url: processedUrl
+      };
+      
+      const result = await saveWaitlistEntry(waitlistEntry);
+      console.log('Waitlist entry saved:', result);
+      
+      setIsWaitlistOpen(false);
+      setWaitlistForm({ name: '', email: '', companyUrl: '' });
+      alert('Thanks! We\'ll be in touch soon.');
+    } catch (error) {
+      console.error('Error saving waitlist entry:', error);
+      alert('Sorry, there was an error. Please try again.');
+    }
   };
 
   const handleWaitlistInputChange = (field: string, value: string) => {
@@ -792,10 +812,10 @@ const LandingDemo = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Your Company URL</label>
                 <Input
-                  type="url"
+                  type="text"
                   value={waitlistForm.companyUrl}
                   onChange={(e) => handleWaitlistInputChange('companyUrl', e.target.value)}
-                  placeholder="https://example.com"
+                  placeholder="example.com"
                   className="w-full p-3 border border-gray-300 rounded"
                   required
                 />
