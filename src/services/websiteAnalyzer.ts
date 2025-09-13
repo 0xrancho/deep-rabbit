@@ -85,7 +85,17 @@ export async function extractYourCompany(url: string): Promise<CompanyInfo> {
       maxTokens: 500
     });
 
-    return JSON.parse(response);
+    try {
+      // Try to extract JSON from the response
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      return JSON.parse(response);
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', response);
+      throw new Error('Invalid response format from AI model');
+    }
   } catch (error) {
     console.error('Error extracting company info:', error);
     throw new Error(`Failed to analyze company website: ${url}`);
@@ -119,7 +129,17 @@ export async function extractProspect(url: string): Promise<ProspectInfo> {
       maxTokens: 500
     });
 
-    return JSON.parse(response);
+    try {
+      // Try to extract JSON from the response
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      return JSON.parse(response);
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', response);
+      throw new Error('Invalid response format from AI model');
+    }
   } catch (error) {
     console.error('Error extracting prospect info:', error);
     throw new Error(`Failed to analyze prospect website: ${url}`);
