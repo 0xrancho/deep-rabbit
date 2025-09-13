@@ -348,24 +348,30 @@ const LandingDemo = () => {
           {currentStage === 'input' && (
             <div>
               <div className="space-y-4 mb-6">
-                <Input
-                  value={formData.yourCompanyUrl}
-                  onChange={(e) => handleInputChange('yourCompanyUrl', e.target.value)}
-                  placeholder="Your company website (e.g., accenture.com)"
-                  className="text-sm md:text-lg p-3 md:p-4 border-2 text-white bg-black border-gray-600 placeholder-gray-400"
-                  style={{ fontFamily: 'Consolas, Monaco, monospace' }}
-                  onKeyPress={(e) => e.key === 'Enter' && document.getElementById('prospectUrl')?.focus()}
-                />
+                <div>
+                  <label className="text-gray-400 text-sm mb-1 block">Your Company Website</label>
+                  <Input
+                    value={formData.yourCompanyUrl}
+                    onChange={(e) => handleInputChange('yourCompanyUrl', e.target.value)}
+                    placeholder="accenture.com"
+                    className="text-sm md:text-lg p-3 md:p-4 border-2 text-white bg-black border-gray-600 placeholder-gray-400"
+                    style={{ fontFamily: 'Consolas, Monaco, monospace' }}
+                    onKeyPress={(e) => e.key === 'Enter' && document.getElementById('prospectUrl')?.focus()}
+                  />
+                </div>
                 
-                <Input
-                  id="prospectUrl"
-                  value={formData.prospectUrl}
-                  onChange={(e) => handleInputChange('prospectUrl', e.target.value)}
-                  placeholder="Your prospect's website (e.g., nike.com)"
-                  className="text-sm md:text-lg p-3 md:p-4 border-2 text-white bg-black border-gray-600 placeholder-gray-400"
-                  style={{ fontFamily: 'Consolas, Monaco, monospace' }}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
-                />
+                <div>
+                  <label className="text-gray-400 text-sm mb-1 block">Prospect's Website</label>
+                  <Input
+                    id="prospectUrl"
+                    value={formData.prospectUrl}
+                    onChange={(e) => handleInputChange('prospectUrl', e.target.value)}
+                    placeholder="nike.com"
+                    className="text-sm md:text-lg p-3 md:p-4 border-2 text-white bg-black border-gray-600 placeholder-gray-400"
+                    style={{ fontFamily: 'Consolas, Monaco, monospace' }}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
+                  />
+                </div>
               </div>
               
               <div className="flex justify-center">
