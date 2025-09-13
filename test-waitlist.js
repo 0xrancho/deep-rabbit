@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Load environment variables
 const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://qamuwnrqyrcfoeabkdss.supabase.co';
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_HeCmgJsDv3yMFo3KbBiGbA_5R0H4E2x';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhbXV3bnJxeXJjZm9lYWJrZHNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0NDkxNTYsImV4cCI6MjA3MzAyNTE1Nn0.wtZ4CUA6eJjvPR60JPWZxAl9sxt2y0dNMHiBhvf7SH8';
 
 console.log('Testing Supabase Waitlist Connection...');
 console.log('URL:', supabaseUrl);
