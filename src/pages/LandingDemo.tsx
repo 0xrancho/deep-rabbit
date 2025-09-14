@@ -342,7 +342,7 @@ const LandingDemo = () => {
           Discovery Intelligence For Deep Relational Context
         </p>
         <p className="text-sm md:text-base text-text-secondary/80 mb-8 md:mb-12" style={{ fontFamily: 'Inter, sans-serif' }}>
-          Trusted by Presales Teams, Engagement Managers, Solution Architects, and Client Partners
+          Trusted by Business Development, Engagement Managers, Solution Architects, and Client Partners
         </p>
 
         {/* Demo Container */}
