@@ -338,8 +338,11 @@ const LandingDemo = () => {
         <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
           Turn any employee into a <span style={{ color: '#6fed82' }}>client engagement</span> expert
         </h1>
-        <p className="text-lg md:text-xl text-text-secondary mb-8 md:mb-12" style={{ fontFamily: 'Inter, sans-serif' }}>
-          AI-powered Elicitation Intelligence for B2B Professional Services
+        <p className="text-lg md:text-xl text-text-secondary mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>
+          Discovery Intelligence For Deep Relational Context
+        </p>
+        <p className="text-sm md:text-base text-text-secondary/80 mb-8 md:mb-12" style={{ fontFamily: 'Inter, sans-serif' }}>
+          Trusted by Presales Teams, Engagement Managers, Solution Architects, and Client Partners
         </p>
 
         {/* Demo Container */}
@@ -732,9 +735,9 @@ const LandingDemo = () => {
               <div className="icon mb-5">
                 <img src={orchestrationIcon} alt="Intelligent Orchestration" className="w-29 h-29 mx-auto" />
               </div>
-              <h4 className="text-xl font-semibold text-white mb-4">Intelligent Orchestration</h4>
+              <h4 className="text-xl font-semibold text-white mb-4">Relational Intelligence</h4>
               <p className="text-text-secondary text-base leading-relaxed">
-                8 elicitation areas with context-aware progression tracking
+                Navigate 8 elicitation areas with context-aware progression
               </p>
             </div>
             
@@ -742,9 +745,9 @@ const LandingDemo = () => {
               <div className="icon mb-5">
                 <img src={enrichmentIcon} alt="Real-time Enrichment" className="w-29 h-29 mx-auto" />
               </div>
-              <h4 className="text-xl font-semibold text-white mb-4">Real-time Enrichment</h4>
+              <h4 className="text-xl font-semibold text-white mb-4">Conversational Enrichment</h4>
               <p className="text-text-secondary text-base leading-relaxed">
-                Search, scrape, and validate answers as they emerge
+                Search, scrape, and retrieve data from local or public sources through natural dialogue
               </p>
             </div>
             
@@ -752,9 +755,9 @@ const LandingDemo = () => {
               <div className="icon mb-5">
                 <img src={extractionIcon} alt="Structured Extraction" className="w-29 h-29 mx-auto" />
               </div>
-              <h4 className="text-xl font-semibold text-white mb-4">Structured Extraction</h4>
+              <h4 className="text-xl font-semibold text-white mb-4">Real-time Integration</h4>
               <p className="text-text-secondary text-base leading-relaxed">
-                Export to CRM via API • Full audit trail • Summary reports
+                Autofill CRM, generate rich reporting
               </p>
             </div>
           </div>
