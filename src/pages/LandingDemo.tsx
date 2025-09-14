@@ -339,7 +339,7 @@ const LandingDemo = () => {
           Empower Seller-Doers with <span style={{ color: '#6fed82' }}>Relational Intelligence</span>
         </h1>
         <p className="text-lg md:text-xl text-text-secondary mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>
-          Discovery Intelligence For Deep Relational Context
+          Because CRMs don't know Bob loves peaches from his brother-in-law Frank, who's your prospect on the firm's next big deal.
         </p>
         <p className="text-sm md:text-base text-text-secondary/80 mb-8 md:mb-12" style={{ fontFamily: 'Inter, sans-serif' }}>
           Trusted by Presales Teams, Engagement Managers, Solution Architects, and Client Partners
