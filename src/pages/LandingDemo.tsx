@@ -336,7 +336,7 @@ const LandingDemo = () => {
       {/* Hero Section */}
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-16 text-center">
         <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
-          Turn any employee into a <span style={{ color: '#6fed82' }}>client engagement</span> expert
+          Empower Seller-Doers with <span style={{ color: '#6fed82' }}>Relational Intelligence</span>
         </h1>
         <p className="text-lg md:text-xl text-text-secondary mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>
           Discovery Intelligence For Deep Relational Context
