@@ -336,7 +336,7 @@ const LandingDemo = () => {
       {/* Hero Section */}
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-16 text-center">
         <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
-          Leveraging <span style={{ color: '#6fed82' }}>Relational Intelligence</span> to Empower Business Development
+          Leverage Your Firms <span style={{ color: '#6fed82' }}>Relational Knowledge</span>
         </h1>
         <p className="text-lg md:text-xl text-text-secondary mb-4" style={{ fontFamily: 'Inter, sans-serif' }}>
           Because CRMs don't know Bob loves peaches from his brother-in-law Frank, who's your prospect on the firm's next big deal.
