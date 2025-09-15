@@ -57,29 +57,24 @@ export class FirecrawlService {
    * Scrape a single URL and extract content
    */
   async scrapeUrl(url: string, options: FirecrawlScrapeOptions = {}): Promise<FirecrawlScrapeResponse> {
-    if (!FIRECRAWL_API_KEY) {
-      console.error('Firecrawl API key not configured');
-      return {
-        success: false,
-        error: 'Firecrawl API key not configured'
-      };
-    }
-    
     try {
-      const response = await fetch(`${FIRECRAWL_API_URL}/scrape`, {
+      // Use the proxy API endpoint to avoid CORS issues
+      const apiUrl = '/api/scrape';
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          url: url
+          url: url,
+          options: options
         })
       });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Firecrawl API error:', errorData);
+        console.error('Firecrawl scraping error:', errorData);
         return {
           success: false,
           error: errorData.error || `HTTP ${response.status}: ${response.statusText}`
